@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0f17" />
+    <title>ICU Med Mastery — Receptor-Level Study Guide</title>
+    <meta name="description" content="Interactive study tool for high-yield ICU medications — vasopressors, inotropes, sedatives, paralytics, transplant meds. Receptor-level mastery." />
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%235eead4'/%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' font-family='-apple-system,sans-serif' font-size='32' font-weight='700' fill='%230b0f17'%3ERx%3C/text%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="logo">Rx</div>
+          <div>
+            <h1>ICU Med Mastery</h1>
+            <div class="subtitle">Receptor-level study guide</div>
+          </div>
+        </div>
+        <div class="readiness-pill" title="Overall readiness across all medications">
+          <span class="label">Ready</span>
+          <span class="score" id="readiness-score">0%</span>
+          <div class="readiness-bar"><div class="fill" id="readiness-fill" style="width:0%"></div></div>
+        </div>
+      </header>
+
+      <nav class="modes" role="tablist">
+        <button class="mode-tab active" data-view="view-reference"><span class="icon">📖</span>Reference</button>
+        <button class="mode-tab" data-view="view-flashcards"><span class="icon">🃏</span>Flashcards</button>
+        <button class="mode-tab" data-view="view-quiz"><span class="icon">🎯</span>Quiz</button>
+        <button class="mode-tab" data-view="view-receptor"><span class="icon">🧪</span>Receptor Drill</button>
+        <button class="mode-tab" data-view="view-recall"><span class="icon">✍️</span>Free Recall</button>
+        <button class="mode-tab" data-view="view-progress"><span class="icon">📊</span>Progress</button>
+      </nav>
+
+      <main>
+        <section id="view-reference" class="view active"></section>
+        <section id="view-flashcards" class="view"></section>
+        <section id="view-quiz" class="view"></section>
+        <section id="view-receptor" class="view"></section>
+        <section id="view-recall" class="view"></section>
+        <section id="view-progress" class="view"></section>
+      </main>
+
+      <footer>
+        <div>Progress saved locally in your browser. Clearing site data resets your readiness score.</div>
+        <div class="disclaimer">Educational reference only. Always cross-check with current institutional protocols and pharmacy resources before clinical use.</div>
+      </footer>
+    </div>
+
+    <script src="./medications.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
