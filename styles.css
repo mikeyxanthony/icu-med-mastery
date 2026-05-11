@@ -222,6 +222,55 @@ header .brand .subtitle {
   transition: width 0.5s cubic-bezier(.4,1.6,.6,1);
 }
 
+/* ───── Love button ───── */
+.love-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  background: linear-gradient(135deg, #ff6b9d 0%, #ec4899 40%, #c084fc 100%);
+  color: white !important;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-family: var(--font-fun);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  box-shadow: 0 6px 20px rgba(236, 72, 153, 0.4), 0 0 0 4px rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  animation: heartbeat 2.4s ease-in-out infinite;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  white-space: nowrap;
+}
+.love-btn:hover {
+  text-decoration: none;
+  transform: scale(1.06) rotate(-2deg);
+  box-shadow: 0 10px 28px rgba(236, 72, 153, 0.55), 0 0 0 4px rgba(255, 255, 255, 0.5);
+  animation-play-state: paused;
+}
+.love-btn:active {
+  transform: scale(0.98);
+}
+.love-btn .love-heart {
+  font-size: 20px;
+  display: inline-block;
+  animation: wobble 1.6s ease-in-out infinite;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  8% { transform: scale(1.06); }
+  16% { transform: scale(1); }
+  24% { transform: scale(1.06); }
+  32% { transform: scale(1); }
+}
+@keyframes wobble {
+  0%, 100% { transform: rotate(-8deg); }
+  50% { transform: rotate(8deg); }
+}
+
 /* ───── Mode tabs ───── */
 .modes {
   display: flex;
@@ -1378,10 +1427,16 @@ footer .disclaimer {
 }
 
 /* ───── Mobile tweaks ───── */
+@media (max-width: 880px) {
+  header.topbar { flex-wrap: wrap; gap: 12px; justify-content: center; }
+  .love-btn { order: 3; font-size: 15px; padding: 9px 16px; }
+}
 @media (max-width: 560px) {
   .app { padding: 18px 14px 50px; }
   header.topbar { padding: 12px 16px; flex-wrap: wrap; }
   header .brand h1 { font-size: 18px; }
+  .love-btn { font-size: 14px; padding: 8px 14px; }
+  .love-btn .love-heart { font-size: 17px; }
   .mode-tab { min-width: auto; padding: 9px 12px; font-size: 12px; }
   .flashcard { padding: 22px; min-height: 280px; border-radius: var(--radius); }
   .flashcard .content { font-size: 24px; }
