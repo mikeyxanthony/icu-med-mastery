@@ -195,12 +195,12 @@
     return `
       <div class="view-header">
         <div>
-          <h2>📖 Reference</h2>
-          <div class="desc">All medications with receptor-level detail. Tap a card to drill in.</div>
+          <h2>📖 Drug Library</h2>
+          <div class="desc">all your faves, receptor-level detail — tap any card to dive in 💕</div>
         </div>
       </div>
       <div class="filter-bar">
-        <input id="ref-search" type="search" placeholder="Search by name, brand, or keyword..."/>
+        <input id="ref-search" type="search" placeholder="search by name, brand, or keyword ✿"/>
       </div>
       <div class="chip-row" id="ref-chips"></div>
       <div style="height:14px"></div>
@@ -238,8 +238,8 @@
     view.innerHTML = `
       <div class="view-header">
         <div>
-          <h2>🃏 Flashcards</h2>
-          <div class="desc">Tap card to flip. Rate your recall to update mastery.</div>
+          <h2>💖 Flashcards</h2>
+          <div class="desc">tap to flip ✿ rate your recall to grow your mastery</div>
         </div>
         <div class="actions">
           <select id="fc-faces" style="background:var(--bg-card);color:var(--text);border:1px solid var(--border-strong);padding:8px 10px;border-radius:8px;font-family:inherit;font-size:13px">
@@ -257,15 +257,15 @@
       <div class="flashcard-container">
         <div class="flashcard" id="fc-card"></div>
         <div class="flashcard-controls">
-          <button class="ghost" id="fc-prev">← Prev</button>
+          <button class="ghost" id="fc-prev">← prev</button>
           <span class="counter" id="fc-counter"></span>
-          <button class="ghost" id="fc-next">Next →</button>
+          <button class="ghost" id="fc-next">next →</button>
         </div>
         <div class="confidence-buttons" id="fc-confidence" style="display:none">
-          <button class="again">😩 Again</button>
-          <button class="hard">😐 Hard</button>
-          <button class="good">🙂 Good</button>
-          <button class="easy">🤩 Easy</button>
+          <button class="again">💔 again</button>
+          <button class="hard">🥲 hard</button>
+          <button class="good">💗 good</button>
+          <button class="easy">👑 easy</button>
         </div>
       </div>
     `;
@@ -284,7 +284,7 @@
       fcState.idx = 0;
       fcState.flipped = false;
       renderFlashcard();
-      toast("Deck reshuffled");
+      toast("deck reshuffled ✨");
     };
     document.getElementById("fc-prev").onclick = () => navFlashcard(-1);
     document.getElementById("fc-next").onclick = () => navFlashcard(1);
@@ -296,7 +296,7 @@
         const d = state.drugs[med.id];
         d.seen += 1;
         saveState();
-        toast(["Marked Again", "Marked Hard", "Marked Good", "Marked Easy"][i]);
+        toast(["marked again 💔", "marked hard 🥲", "marked good 💗", "marked easy 👑"][i]);
         navFlashcard(1);
       };
     });
@@ -423,8 +423,8 @@
     view.innerHTML = `
       <div class="view-header">
         <div>
-          <h2>🎯 Quiz Mode</h2>
-          <div class="desc">Mixed multiple-choice from mechanism, receptors, dosing, side effects.</div>
+          <h2>🌸 Quiz Mode</h2>
+          <div class="desc">mixed MCQs — mechanism, receptors, dosing, side effects ✨</div>
         </div>
         <div class="actions">
           <select id="quiz-length" style="background:var(--bg-card);color:var(--text);border:1px solid var(--border-strong);padding:8px 10px;border-radius:8px;font-family:inherit;font-size:13px">
@@ -520,10 +520,10 @@
     const total = quizState.questions.length;
     const pct = Math.round((quizState.score / total) * 100);
     const msg =
-      pct >= 90 ? "Mastery territory. Receptors locked in."
-      : pct >= 75 ? "Solid. A few weak spots to tighten."
-      : pct >= 60 ? "Getting there. Focus on the misses."
-      : "Time to review. Hit the reference + flashcards.";
+      pct >= 90 ? "slay queen 👑 receptors locked in"
+      : pct >= 75 ? "you're cooking ✨ tighten the weak spots"
+      : pct >= 60 ? "getting there bestie 💕 focus on the misses"
+      : "time to review boo — hit the library + flashcards 🌸";
     body.innerHTML = `
       <div class="results">
         <h2>Quiz complete</h2>
@@ -535,7 +535,7 @@
           <div class="stat-card"><div class="label">Readiness</div><div class="value" style="color:var(--accent)">${overallReadiness()}%</div></div>
         </div>
         <div style="margin-bottom:20px;color:var(--text-muted)">${msg}</div>
-        <button class="primary" id="quiz-restart">Run another</button>
+        <button class="primary" id="quiz-restart">run another ✿</button>
       </div>
     `;
     document.getElementById("quiz-restart").onclick = startQuiz;
@@ -561,8 +561,8 @@
     view.innerHTML = `
       <div class="view-header">
         <div>
-          <h2>🧪 Receptor Drill</h2>
-          <div class="desc">Pure receptor pharmacology. Identify the drug from its receptor profile.</div>
+          <h2>🧬 Receptor Drill</h2>
+          <div class="desc">pure pharm — identify the drug from its receptor profile 💕</div>
         </div>
         <div class="actions">
           <button class="primary" id="rec-start">Start drill</button>
@@ -597,7 +597,7 @@
           <h2>Receptor drill complete</h2>
           <div class="score-display">${pct}%</div>
           <div class="score-fraction">${recState.score} / ${total} correct</div>
-          <button class="primary" id="rec-restart">Run another</button>
+          <button class="primary" id="rec-restart">run another ✿</button>
         </div>
       `;
       document.getElementById("rec-restart").onclick = startReceptor;
@@ -675,8 +675,8 @@
       view.innerHTML = `
         <div class="view-header">
           <div>
-            <h2>✍️ Free Recall</h2>
-            <div class="desc">Brain-dump everything you know, then check yourself. Self-graded mastery.</div>
+            <h2>✨ Free Recall</h2>
+            <div class="desc">brain dump everything you know, then check yourself ✿</div>
           </div>
           <div class="actions">
             <button class="ghost" id="recall-skip">Skip →</button>
@@ -704,14 +704,14 @@
         bumpMastery(med.id, 12);
         state.sessions.recall += 1;
         saveState();
-        toast("+12% mastery");
+        toast("+12% mastery 💖");
         pickRecallDrug();
       };
       document.getElementById("recall-bad").onclick = () => {
         bumpMastery(med.id, -4);
         state.sessions.recall += 1;
         saveState();
-        toast("Marked for review");
+        toast("marked for review 💕");
         pickRecallDrug();
       };
     }
@@ -754,7 +754,7 @@
       <div class="view-header">
         <div>
           <h2>📊 Progress</h2>
-          <div class="desc">Readiness, per-drug mastery, and lifetime stats — all saved locally.</div>
+          <div class="desc">your readiness, per-drug mastery, all your stats ✨ saved locally</div>
         </div>
         <div class="actions">
           <button class="danger" id="prog-reset">Reset all progress</button>
@@ -787,13 +787,13 @@
           <div class="sub">Quizzes: ${state.sessions.quiz} · Flash: ${state.sessions.flashcard} · Recall: ${state.sessions.recall} · Receptor: ${state.sessions.receptor}</div>
         </div>
         <div class="stat-tile">
-          <div class="label">Suggested Next</div>
-          <div class="big" style="font-size:18px;line-height:1.4">${
+          <div class="label">Suggested Next ✿</div>
+          <div class="big" style="font-size:20px;line-height:1.4">${
             weak > 0
-              ? "🎯 Run a Quiz — auto-targets weak drugs"
+              ? "🌸 run a quiz — targets your weak drugs"
               : mastered < total
-              ? "🃏 Review with Flashcards"
-              : "🧪 Try the Receptor Drill"
+              ? "💖 review with flashcards"
+              : "🧬 try the receptor drill"
           }</div>
         </div>
       </div>
@@ -823,7 +823,7 @@
         saveState();
         updateReadinessUI();
         renderProgress();
-        toast("Progress reset");
+        toast("fresh start ✨");
       }
     };
   }
