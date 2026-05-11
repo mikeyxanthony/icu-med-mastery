@@ -11,9 +11,11 @@
     drugs: Object.fromEntries(
       MEDS.map((m) => [m.id, { mastery: 0, seen: 0, correct: 0, wrong: 0, lastSeen: null }])
     ),
-    sessions: { quiz: 0, flashcard: 0, recall: 0, receptor: 0 },
+    sessions: { quiz: 0, flashcard: 0, recall: 0, receptor: 0, match: 0, trivia: 0 },
     totalQuestions: 0,
     totalCorrect: 0,
+    triviaHighScore: 0,
+    triviaBestStreak: 0,
   });
 
   function loadState() {
@@ -87,9 +89,11 @@
     // Hooks to refresh content
     if (viewId === "view-reference") renderReference();
     if (viewId === "view-flashcards") startFlashcards();
+    if (viewId === "view-match") startMatch();
     if (viewId === "view-quiz") startQuiz();
     if (viewId === "view-receptor") startReceptor();
     if (viewId === "view-recall") startRecall();
+    if (viewId === "view-trivia") startTrivia();
     if (viewId === "view-progress") renderProgress();
   }
 
@@ -739,6 +743,429 @@
     `;
   }
 
+  // ─────────────────────────── Match Game ───────────────────────────
+  let matchState = {
+    type: "moa",
+    pairs: [],
+    pairCount: 6,
+    leftSelected: null,
+    matched: new Set(),
+    attempts: 0,
+    correctAttempts: 0,
+    startTime: null,
+    finished: false,
+  };
+
+  const MATCH_TYPES = [
+    { key: "moa", label: "Mechanism", short: "MOA", truncate: 220 },
+    { key: "receptors", label: "Receptors", short: "Receptors", truncate: 180 },
+    { key: "uses", label: "Top Indication", short: "Use", truncate: 120 },
+    { key: "dose", label: "Dose", short: "Dose", truncate: 160 },
+    { key: "side", label: "Side Effect", short: "AE", truncate: 100 },
+    { key: "contra", label: "Contraindication", short: "Contra", truncate: 160 },
+  ];
+
+  function extractMatchValue(drug, type) {
+    switch (type) {
+      case "moa": return drug.mechanism;
+      case "receptors": return drug.receptors;
+      case "uses": return drug.uses[0];
+      case "dose": return drug.dose;
+      case "side": return drug.sideEffects[0];
+      case "contra": return drug.contraindications[0];
+    }
+  }
+  function truncateText(s, n) {
+    if (!s) return "";
+    return s.length > n ? s.slice(0, n - 1).trim() + "…" : s;
+  }
+
+  function startMatch() {
+    const view = document.getElementById("view-match");
+    view.innerHTML = `
+      <div class="view-header">
+        <div>
+          <h2>🍓 Match Game</h2>
+          <div class="desc">pair each drug with its match — pick a type below to start ✨</div>
+        </div>
+        <div class="actions">
+          <select id="match-count">
+            <option value="6">6 pairs</option>
+            <option value="8">8 pairs</option>
+            <option value="10">10 pairs</option>
+          </select>
+        </div>
+      </div>
+      <div class="chip-row" id="match-chips" style="margin-bottom:18px"></div>
+      <div id="match-body"></div>
+    `;
+    const chipRow = document.getElementById("match-chips");
+    MATCH_TYPES.forEach((t) => {
+      const chip = document.createElement("div");
+      chip.className = "chip" + (matchState.type === t.key ? " active" : "");
+      chip.textContent = "✿ " + t.label;
+      chip.onclick = () => {
+        matchState.type = t.key;
+        startMatch();
+      };
+      chipRow.appendChild(chip);
+    });
+    document.getElementById("match-count").value = String(matchState.pairCount);
+    document.getElementById("match-count").onchange = (e) => {
+      matchState.pairCount = parseInt(e.target.value, 10);
+      newMatchRound();
+    };
+    newMatchRound();
+  }
+
+  function newMatchRound() {
+    const sample = shuffle([...MEDS]).slice(0, Math.min(matchState.pairCount, MEDS.length));
+    const typeDef = MATCH_TYPES.find((t) => t.key === matchState.type);
+    matchState.pairs = sample.map((drug) => ({
+      id: drug.id,
+      name: drug.name,
+      aliases: drug.aliases,
+      category: drug.category,
+      value: extractMatchValue(drug, matchState.type),
+      preview: truncateText(extractMatchValue(drug, matchState.type), typeDef.truncate),
+    }));
+    matchState.leftSelected = null;
+    matchState.matched = new Set();
+    matchState.attempts = 0;
+    matchState.correctAttempts = 0;
+    matchState.startTime = Date.now();
+    matchState.finished = false;
+    renderMatch();
+  }
+
+  function renderMatch() {
+    const body = document.getElementById("match-body");
+    const typeDef = MATCH_TYPES.find((t) => t.key === matchState.type);
+    const leftOrder = matchState.pairs;
+    const rightOrder = shuffle([...matchState.pairs]);
+
+    const elapsed = Math.floor((Date.now() - matchState.startTime) / 1000);
+    const minutes = Math.floor(elapsed / 60).toString();
+    const seconds = (elapsed % 60).toString().padStart(2, "0");
+
+    if (matchState.finished) {
+      const accuracy = matchState.attempts === 0 ? 0 : Math.round((matchState.correctAttempts / matchState.attempts) * 100);
+      const msg =
+        accuracy >= 90 ? "flawless 👑✨"
+        : accuracy >= 75 ? "you ate that 💖"
+        : accuracy >= 60 ? "solid effort 🌸"
+        : "let's try again bestie 💕";
+      body.innerHTML = `
+        <div class="results">
+          <h2>round complete</h2>
+          <div class="score-display">${accuracy}%</div>
+          <div class="score-fraction">${matchState.correctAttempts} correct of ${matchState.attempts} attempts</div>
+          <div class="stats-row">
+            <div class="stat-card"><div class="label">Pairs</div><div class="value" style="color:var(--lavender-deep)">${matchState.pairs.length}</div></div>
+            <div class="stat-card"><div class="label">Time</div><div class="value" style="color:var(--pink-deep)">${minutes}:${seconds}</div></div>
+            <div class="stat-card"><div class="label">Readiness</div><div class="value" style="color:var(--mint)">${overallReadiness()}%</div></div>
+          </div>
+          <div style="margin-bottom:20px;color:var(--ink-soft);font-family:var(--font-fun);font-size:20px">${msg}</div>
+          <button class="primary" id="match-again">run another ✿</button>
+        </div>
+      `;
+      document.getElementById("match-again").onclick = newMatchRound;
+      return;
+    }
+
+    body.innerHTML = `
+      <div class="match-stats">
+        <div><span style="color:var(--ink-mute)">matching</span> <strong style="color:var(--pink-deep)">drug → ${typeDef.label.toLowerCase()}</strong></div>
+        <div class="match-progress"><div class="fill" style="width:${(matchState.matched.size / matchState.pairs.length) * 100}%"></div></div>
+        <div><span style="color:var(--ink-mute)">${matchState.matched.size}/${matchState.pairs.length}</span> · <span style="color:var(--lavender-deep)">${matchState.attempts} tries</span></div>
+      </div>
+      <div class="match-board">
+        <div class="match-col">
+          <div class="match-col-header">💊 drugs</div>
+          ${leftOrder.map((p) => {
+            const isMatched = matchState.matched.has(p.id);
+            const isSelected = matchState.leftSelected === p.id;
+            return `
+              <button class="match-card left ${isMatched ? "matched" : ""} ${isSelected ? "selected" : ""}" data-id="${p.id}" ${isMatched ? "disabled" : ""}>
+                <div class="match-card-title">${p.name}</div>
+                <div class="match-card-sub">${p.category}</div>
+              </button>
+            `;
+          }).join("")}
+        </div>
+        <div class="match-col">
+          <div class="match-col-header">✨ ${typeDef.label.toLowerCase()}</div>
+          ${rightOrder.map((p) => {
+            const isMatched = matchState.matched.has(p.id);
+            return `
+              <button class="match-card right ${isMatched ? "matched" : ""}" data-id="${p.id}" ${isMatched ? "disabled" : ""}>
+                <div class="match-card-value">${p.preview}</div>
+              </button>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `;
+
+    body.querySelectorAll(".match-card.left").forEach((el) => {
+      el.onclick = () => {
+        if (matchState.matched.has(el.dataset.id)) return;
+        matchState.leftSelected = matchState.leftSelected === el.dataset.id ? null : el.dataset.id;
+        renderMatch();
+      };
+    });
+    body.querySelectorAll(".match-card.right").forEach((el) => {
+      el.onclick = () => {
+        if (matchState.matched.has(el.dataset.id)) return;
+        if (!matchState.leftSelected) {
+          el.classList.add("shake");
+          setTimeout(() => el.classList.remove("shake"), 350);
+          return;
+        }
+        const rightId = el.dataset.id;
+        const leftId = matchState.leftSelected;
+        matchState.attempts += 1;
+        if (rightId === leftId) {
+          matchState.matched.add(rightId);
+          matchState.correctAttempts += 1;
+          matchState.leftSelected = null;
+          bumpMastery(rightId, 7);
+          const d = state.drugs[rightId]; d.seen += 1; saveState();
+          if (matchState.matched.size === matchState.pairs.length) {
+            matchState.finished = true;
+            state.sessions.match = (state.sessions.match || 0) + 1;
+            saveState();
+            toast("round complete 👑");
+          }
+          renderMatch();
+        } else {
+          el.classList.add("wrong-flash");
+          const leftEl = body.querySelector(`.match-card.left[data-id="${leftId}"]`);
+          if (leftEl) leftEl.classList.add("wrong-flash");
+          bumpMastery(rightId, -2);
+          bumpMastery(leftId, -2);
+          setTimeout(() => {
+            matchState.leftSelected = null;
+            renderMatch();
+          }, 450);
+        }
+      };
+    });
+  }
+
+  // ─────────────────────────── Trivia (Speed Round) ───────────────────────────
+  let triviaState = {
+    active: false,
+    timeLeft: 60,
+    duration: 60,
+    score: 0,
+    streak: 0,
+    bestStreak: 0,
+    total: 0,
+    correct: 0,
+    current: null,
+    timerId: null,
+    answered: false,
+  };
+
+  function startTrivia() {
+    const view = document.getElementById("view-trivia");
+    if (triviaState.active) {
+      renderTriviaGame();
+      return;
+    }
+    view.innerHTML = `
+      <div class="view-header">
+        <div>
+          <h2>🎀 Trivia Time</h2>
+          <div class="desc">60 seconds, infinite questions, streaks for bonus points 🔥</div>
+        </div>
+        <div class="actions">
+          <select id="trivia-duration">
+            <option value="30">30 sec</option>
+            <option value="60" selected>60 sec</option>
+            <option value="120">2 min</option>
+          </select>
+        </div>
+      </div>
+      <div class="trivia-intro">
+        <div class="trivia-highscore">
+          <div class="hs-label">highscore ✨</div>
+          <div class="hs-value">${state.triviaHighScore || 0}</div>
+          <div class="hs-sub">best streak: ${state.triviaBestStreak || 0} 🔥</div>
+        </div>
+        <div class="trivia-rules">
+          <h3>how to play 💕</h3>
+          <ul>
+            <li>each correct answer = <strong>10 points</strong></li>
+            <li>3-in-a-row streak = <strong>2× multiplier</strong> 🔥</li>
+            <li>5-in-a-row streak = <strong>3× multiplier</strong> 🔥🔥</li>
+            <li>wrong answer breaks the streak — but no penalty</li>
+            <li>questions pull from every mode — mechanism, receptors, dosing, side effects, pearls</li>
+          </ul>
+          <button class="primary" id="trivia-start" style="margin-top:14px;font-size:16px;padding:14px 28px">start round ✨</button>
+        </div>
+      </div>
+    `;
+    document.getElementById("trivia-start").onclick = () => {
+      triviaState.duration = parseInt(document.getElementById("trivia-duration").value, 10);
+      beginTrivia();
+    };
+  }
+
+  function beginTrivia() {
+    triviaState.active = true;
+    triviaState.timeLeft = triviaState.duration;
+    triviaState.score = 0;
+    triviaState.streak = 0;
+    triviaState.bestStreak = 0;
+    triviaState.total = 0;
+    triviaState.correct = 0;
+    triviaState.answered = false;
+    triviaState.current = pickTriviaQuestion();
+    triviaState.timerId = setInterval(() => {
+      triviaState.timeLeft -= 1;
+      if (triviaState.timeLeft <= 0) endTrivia();
+      else updateTriviaTimerUI();
+    }, 1000);
+    renderTriviaGame();
+  }
+
+  function pickTriviaQuestion() {
+    const med = MEDS[Math.floor(Math.random() * MEDS.length)];
+    return buildQuestion(med);
+  }
+
+  function streakMultiplier(streak) {
+    if (streak >= 5) return 3;
+    if (streak >= 3) return 2;
+    return 1;
+  }
+
+  function updateTriviaTimerUI() {
+    const tEl = document.getElementById("trivia-time");
+    const fEl = document.getElementById("trivia-time-fill");
+    if (tEl) tEl.textContent = triviaState.timeLeft + "s";
+    if (fEl) fEl.style.width = (triviaState.timeLeft / triviaState.duration) * 100 + "%";
+    if (tEl && triviaState.timeLeft <= 10) tEl.classList.add("urgent");
+  }
+
+  function renderTriviaGame() {
+    const view = document.getElementById("view-trivia");
+    const q = triviaState.current;
+    const mult = streakMultiplier(triviaState.streak);
+    view.innerHTML = `
+      <div class="trivia-hud">
+        <div class="trivia-time-box ${triviaState.timeLeft <= 10 ? "urgent" : ""}">
+          <div class="trivia-time-label">time</div>
+          <div class="trivia-time" id="trivia-time">${triviaState.timeLeft}s</div>
+          <div class="trivia-time-bar"><div class="fill" id="trivia-time-fill" style="width:${(triviaState.timeLeft / triviaState.duration) * 100}%"></div></div>
+        </div>
+        <div class="trivia-score-box">
+          <div class="trivia-score-label">score</div>
+          <div class="trivia-score">${triviaState.score}</div>
+        </div>
+        <div class="trivia-streak-box ${triviaState.streak >= 3 ? "fire" : ""}">
+          <div class="trivia-streak-label">streak ${mult > 1 ? `<span class="mult">${mult}×</span>` : ""}</div>
+          <div class="trivia-streak">${triviaState.streak} ${"🔥".repeat(Math.min(3, Math.floor(triviaState.streak / 3)))}</div>
+        </div>
+      </div>
+      <div class="question-card trivia-card">
+        <div class="q-meta">${labelType(q.type)}</div>
+        <div class="q-text">${q.q}</div>
+        <div class="choice-list">
+          ${q.choices.map((c, i) => `
+            <button class="choice" data-choice="${escapeAttr(c)}">
+              <span class="letter">${"ABCD"[i]}</span>
+              <span>${c}</span>
+            </button>
+          `).join("")}
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:14px">
+        <button class="ghost" id="trivia-end">end early</button>
+      </div>
+    `;
+    view.querySelectorAll(".choice").forEach((btn) => {
+      btn.onclick = () => answerTrivia(btn.dataset.choice, q, btn);
+    });
+    document.getElementById("trivia-end").onclick = endTrivia;
+  }
+
+  function answerTrivia(picked, q, btn) {
+    if (triviaState.answered || !triviaState.active) return;
+    triviaState.answered = true;
+    const correct = picked === q.correct;
+    triviaState.total += 1;
+    recordAnswer(q.drugId, correct);
+    if (correct) {
+      triviaState.correct += 1;
+      triviaState.streak += 1;
+      triviaState.bestStreak = Math.max(triviaState.bestStreak, triviaState.streak);
+      const pts = 10 * streakMultiplier(triviaState.streak);
+      triviaState.score += pts;
+      btn.classList.add("correct");
+      showFloatingPoints(btn, "+" + pts);
+    } else {
+      triviaState.streak = 0;
+      btn.classList.add("wrong");
+      const correctBtn = [...document.querySelectorAll(".choice")].find((b) => b.dataset.choice === q.correct);
+      if (correctBtn) correctBtn.classList.add("correct");
+    }
+    setTimeout(() => {
+      if (!triviaState.active) return;
+      triviaState.answered = false;
+      triviaState.current = pickTriviaQuestion();
+      renderTriviaGame();
+    }, correct ? 450 : 750);
+  }
+
+  function showFloatingPoints(anchor, text) {
+    const el = document.createElement("div");
+    el.className = "floating-points";
+    el.textContent = text;
+    const rect = anchor.getBoundingClientRect();
+    el.style.left = rect.left + rect.width / 2 + "px";
+    el.style.top = rect.top + "px";
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 900);
+  }
+
+  function endTrivia() {
+    clearInterval(triviaState.timerId);
+    triviaState.active = false;
+    state.sessions.trivia = (state.sessions.trivia || 0) + 1;
+    const newHigh = triviaState.score > (state.triviaHighScore || 0);
+    if (newHigh) state.triviaHighScore = triviaState.score;
+    if (triviaState.bestStreak > (state.triviaBestStreak || 0)) state.triviaBestStreak = triviaState.bestStreak;
+    saveState();
+    renderTriviaResults(newHigh);
+  }
+
+  function renderTriviaResults(newHigh) {
+    const view = document.getElementById("view-trivia");
+    const acc = triviaState.total === 0 ? 0 : Math.round((triviaState.correct / triviaState.total) * 100);
+    view.innerHTML = `
+      <div class="results">
+        ${newHigh ? '<div class="new-high">🏆 new high score!</div>' : ""}
+        <h2>${newHigh ? "yasss queen 👑" : "round over ✨"}</h2>
+        <div class="score-display">${triviaState.score}</div>
+        <div class="score-fraction">${triviaState.correct}/${triviaState.total} correct · ${acc}% accuracy</div>
+        <div class="stats-row">
+          <div class="stat-card"><div class="label">Best Streak</div><div class="value" style="color:var(--pink-deep)">${triviaState.bestStreak} 🔥</div></div>
+          <div class="stat-card"><div class="label">Highscore</div><div class="value" style="color:var(--lavender-deep)">${state.triviaHighScore || 0}</div></div>
+          <div class="stat-card"><div class="label">Readiness</div><div class="value" style="color:var(--mint)">${overallReadiness()}%</div></div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+          <button class="primary" id="trivia-replay">play again ✿</button>
+          <button class="ghost" id="trivia-home">back to menu</button>
+        </div>
+      </div>
+    `;
+    document.getElementById("trivia-replay").onclick = beginTrivia;
+    document.getElementById("trivia-home").onclick = startTrivia;
+  }
+
   // ─────────────────────────── Progress Dashboard ───────────────────────────
   function renderProgress() {
     const view = document.getElementById("view-progress");
@@ -748,7 +1175,7 @@
     const acc = state.totalQuestions === 0
       ? 0
       : Math.round((state.totalCorrect / state.totalQuestions) * 100);
-    const sessionsTotal = state.sessions.quiz + state.sessions.flashcard + state.sessions.recall + state.sessions.receptor;
+    const sessionsTotal = state.sessions.quiz + state.sessions.flashcard + state.sessions.recall + state.sessions.receptor + (state.sessions.match || 0) + (state.sessions.trivia || 0);
 
     view.innerHTML = `
       <div class="view-header">
@@ -784,7 +1211,7 @@
         <div class="stat-tile">
           <div class="label">Study Sessions</div>
           <div class="big">${sessionsTotal}</div>
-          <div class="sub">Quizzes: ${state.sessions.quiz} · Flash: ${state.sessions.flashcard} · Recall: ${state.sessions.recall} · Receptor: ${state.sessions.receptor}</div>
+          <div class="sub">Quiz: ${state.sessions.quiz} · Flash: ${state.sessions.flashcard} · Match: ${state.sessions.match || 0} · Trivia: ${state.sessions.trivia || 0} · Recall: ${state.sessions.recall} · Receptor: ${state.sessions.receptor}</div>
         </div>
         <div class="stat-tile">
           <div class="label">Suggested Next ✿</div>
