@@ -151,35 +151,35 @@
           </div>
         </div>
         <div class="sections">
-          <div class="detail-block full">
+          <div class="detail-block full" data-ai="moa">
             <h3>Mechanism of Action</h3>
             <p>${m.mechanism}</p>
           </div>
-          <div class="detail-block full info-block">
+          <div class="detail-block full info-block" data-ai="receptors">
             <h3>Receptor-Level Effects</h3>
             <p>${m.receptors}</p>
           </div>
-          <div class="detail-block">
+          <div class="detail-block" data-ai="uses">
             <h3>Clinical Uses</h3>
             <ul>${m.uses.map((u) => `<li>${u}</li>`).join("")}</ul>
           </div>
-          <div class="detail-block">
+          <div class="detail-block" data-ai="dose">
             <h3>Typical Dosage</h3>
             <p>${m.dose}</p>
           </div>
-          <div class="detail-block warn">
+          <div class="detail-block warn" data-ai="sideEffects">
             <h3>Side Effects</h3>
             <ul>${m.sideEffects.map((s) => `<li>${s}</li>`).join("")}</ul>
           </div>
-          <div class="detail-block danger-block">
+          <div class="detail-block danger-block" data-ai="contra">
             <h3>Contraindications</h3>
             <ul>${m.contraindications.map((c) => `<li>${c}</li>`).join("")}</ul>
           </div>
-          <div class="detail-block full">
+          <div class="detail-block full" data-ai="pearls">
             <h3>ICU Pearls</h3>
             <ul>${m.icuPearls.map((p) => `<li>${p}</li>`).join("")}</ul>
           </div>
-          <div class="detail-block full info-block">
+          <div class="detail-block full info-block" data-ai="highYield">
             <h3>High-Yield / Nursing Knowledge</h3>
             <p>${m.highYield}</p>
           </div>
@@ -187,11 +187,27 @@
       </div>
     `;
     container.querySelector(".back").onclick = () => {
-      // Re-render the reference list view
       container.innerHTML = referenceShell();
       bindReferenceFilters();
       renderReference();
     };
+    // Attach AI tutor buttons to each detail block
+    const aiSections = [
+      ["moa", "Mechanism of Action", m.mechanism],
+      ["receptors", "Receptor-Level Effects", m.receptors],
+      ["uses", "Clinical Uses", m.uses],
+      ["dose", "Typical Dosage", m.dose],
+      ["sideEffects", "Side Effects", m.sideEffects],
+      ["contra", "Contraindications", m.contraindications],
+      ["pearls", "ICU Pearls", m.icuPearls],
+      ["highYield", "High-Yield / Nursing Knowledge", m.highYield],
+    ];
+    if (window.AITutor) {
+      aiSections.forEach(([key, label, content]) => {
+        const el = container.querySelector(`[data-ai="${key}"]`);
+        if (el) window.AITutor.attachAIButtons(el, { topic: m.name, section: label, getContent: () => content });
+      });
+    }
     bumpMastery(m.id, 1);
   }
 

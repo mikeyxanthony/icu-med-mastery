@@ -1872,6 +1872,65 @@ footer .disclaimer {
   color: var(--ink-soft);
 }
 
+/* ───── AI Tutor buttons (ChatGPT + Gemini) ───── */
+.ai-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.ai-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  border: 2px solid transparent;
+  transition: all 0.18s ease;
+  box-shadow: var(--shadow-sm);
+}
+.ai-btn .ai-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+.ai-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.ai-btn:active { transform: translateY(0); }
+
+.ai-btn.chatgpt {
+  background: linear-gradient(135deg, #d1fae5, #ecfdf5);
+  color: #047857;
+  border-color: #6ee7b7;
+}
+.ai-btn.chatgpt:hover {
+  background: linear-gradient(135deg, #10a37f, #34d399);
+  color: white;
+  border-color: #10a37f;
+}
+
+.ai-btn.gemini {
+  background: linear-gradient(135deg, #dbeafe, #ede9fe);
+  color: #1e40af;
+  border-color: #93c5fd;
+}
+.ai-btn.gemini:hover {
+  background: linear-gradient(135deg, #4285f4, #9b72cb);
+  color: white;
+  border-color: #4285f4;
+}
+
+/* When AI buttons follow export buttons in same area */
+.export-buttons + .ai-buttons {
+  margin-top: 8px;
+}
+
 /* ───── ECMO Page ───── */
 .ecmo-svg {
   width: 100%;

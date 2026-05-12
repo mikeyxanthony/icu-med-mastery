@@ -250,15 +250,15 @@
           <div class="coronary-origin">${c.origin}</div>
         </div>
         <div class="coronary-body">
-          <div class="coronary-section">
+          <div class="coronary-section" data-ai="branches">
             <h4>Branches</h4>
             <ul>${c.branches.map((b) => `<li>${b}</li>`).join("")}</ul>
           </div>
-          <div class="coronary-section">
+          <div class="coronary-section" data-ai="perfuses">
             <h4>Perfuses</h4>
             <ul>${c.perfuses.map((p) => `<li>${p}</li>`).join("")}</ul>
           </div>
-          <div class="coronary-section danger-block">
+          <div class="coronary-section danger-block" data-ai="mi">
             <h4>If blocked → ${c.mi.region}</h4>
             <div class="ekg-leads-row">
               <div><strong>ST elevation leads:</strong> <code>${c.mi.leads}</code></div>
@@ -279,6 +279,19 @@
         getText: () => coronaryToText(c),
         getSvg: () => document.getElementById("heart-coronary-svg"),
         baseFilename: `coronary-${c.id}`,
+      });
+    }
+    if (window.AITutor) {
+      const topic = `${c.fullName} (${c.name})`;
+      const miContent = `Region: ${c.mi.region}\nST elevation leads: ${c.mi.leads}\nReciprocal: ${c.mi.reciprocal}\n\nComplications:\n${c.mi.complications.map((x) => `• ${x}`).join("\n")}`;
+      const aiSections = [
+        ["branches", "Branches", c.branches],
+        ["perfuses", "Perfused territory", c.perfuses],
+        ["mi", `MI pattern: ${c.mi.region}`, miContent],
+      ];
+      aiSections.forEach(([key, label, content]) => {
+        const el = target.querySelector(`[data-ai="${key}"]`);
+        if (el) window.AITutor.attachAIButtons(el, { topic, section: label, getContent: () => content });
       });
     }
   }
@@ -408,6 +421,7 @@
           </div>
           <div class="murmur-nursing"><strong>Nursing pearl:</strong> ${m.nursing}</div>
           <div class="export-buttons-mount" data-i="${i}"></div>
+          <div class="ai-mount-wrap" data-i="${i}"></div>
         </div>
       </div>
     `).join("");
@@ -417,6 +431,17 @@
         window.NotesExport.attachExportButtons(mount, {
           getText: () => murmurToText(list[i]),
           baseFilename: `murmur-${list[i].id}`,
+        });
+      });
+    }
+    if (window.AITutor) {
+      grid.querySelectorAll(".ai-mount-wrap").forEach((mount) => {
+        const i = parseInt(mount.dataset.i, 10);
+        const m = list[i];
+        window.AITutor.attachAIButtons(mount, {
+          topic: `${m.name} murmur`,
+          section: `${m.name} — ${m.type} murmur`,
+          getContent: () => murmurToText(m),
         });
       });
     }
@@ -491,8 +516,8 @@
             <span class="condition-category">${c.category}</span>
           </div>
         </div>
-        ${c.sections.map((s) => `
-          <div class="condition-section">
+        ${c.sections.map((s, idx) => `
+          <div class="condition-section" data-ai-section-idx="${idx}">
             <h3>${s.title}</h3>
             <ul>${s.items.map((i) => `<li>${i}</li>`).join("")}</ul>
           </div>
@@ -509,6 +534,17 @@
       window.NotesExport.attachExportButtons(document.getElementById("cond-export-mount"), {
         getText: () => conditionToText(c),
         baseFilename: `condition-${c.id}`,
+      });
+    }
+    if (window.AITutor) {
+      target.querySelectorAll("[data-ai-section-idx]").forEach((el) => {
+        const idx = parseInt(el.dataset.aiSectionIdx, 10);
+        const s = c.sections[idx];
+        window.AITutor.attachAIButtons(el, {
+          topic: `${c.name} (${c.fullName})`,
+          section: s.title,
+          getContent: () => s.items,
+        });
       });
     }
   }

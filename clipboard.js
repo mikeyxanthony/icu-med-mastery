@@ -140,4 +140,72 @@
   }
 
   window.NotesExport = { copyForNotes, downloadAsPng, copyTextOnly, attachExportButtons, svgToPngBlob };
+
+  // ─── AI Tutor — deeplink to ChatGPT / Gemini with pre-filled prompt ───
+  const MAX_URL_LEN = 1900;
+
+  function formatContent(content) {
+    if (content == null) return "";
+    if (typeof content === "string") return content;
+    if (Array.isArray(content)) return content.map((c) => `• ${c}`).join("\n");
+    return String(content);
+  }
+
+  function promptTemplate(topic, section, content) {
+    return `I'm a critical care nurse studying ${topic} and want to go deeper on this specific part — "${section}". Here's what I have so far:
+
+${content}
+
+Please break this down in a way that goes beyond the textbook version. Use bedside examples I'd actually see in the ICU, draw connections to physiology I should already know, and use analogies where they help. After your explanation I'll have follow-up questions if anything is still fuzzy.`;
+  }
+
+  function buildAIPrompt(topic, section, rawContent) {
+    const formatted = formatContent(rawContent);
+    let prompt = promptTemplate(topic, section, formatted);
+    const testUrl = `https://chatgpt.com/?q=${encodeURIComponent(prompt)}`;
+    if (testUrl.length > MAX_URL_LEN) {
+      const overhead = encodeURIComponent(promptTemplate(topic, section, "")).length + 80;
+      const availableEncoded = MAX_URL_LEN - "https://chatgpt.com/?q=".length - overhead;
+      const maxRaw = Math.max(200, Math.floor(availableEncoded / 2.2));
+      const truncated = formatted.length > maxRaw
+        ? formatted.slice(0, maxRaw).replace(/\s+\S*$/, "") + "..."
+        : formatted;
+      prompt = promptTemplate(topic, section, truncated);
+    }
+    return prompt;
+  }
+
+  function openInAI(service, prompt) {
+    const encoded = encodeURIComponent(prompt);
+    const url = service === "gemini"
+      ? `https://gemini.google.com/app?q=${encoded}`
+      : `https://chatgpt.com/?q=${encoded}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  function attachAIButtons(container, opts = {}) {
+    const { topic, section, getContent } = opts;
+    if (!container) return null;
+    const wrap = document.createElement("div");
+    wrap.className = "ai-buttons";
+    wrap.innerHTML = `
+      <button class="ai-btn chatgpt" data-svc="chatgpt" title="open ChatGPT with this section pre-loaded">
+        <span class="ai-icon">💬</span><span>ask ChatGPT</span>
+      </button>
+      <button class="ai-btn gemini" data-svc="gemini" title="open Gemini with this section pre-loaded">
+        <span class="ai-icon">✨</span><span>ask Gemini</span>
+      </button>
+    `;
+    wrap.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const content = typeof getContent === "function" ? getContent() : (getContent || "");
+        const prompt = buildAIPrompt(topic, section, content);
+        openInAI(btn.dataset.svc, prompt);
+      });
+    });
+    container.appendChild(wrap);
+    return wrap;
+  }
+
+  window.AITutor = { buildAIPrompt, openInAI, attachAIButtons };
 })();

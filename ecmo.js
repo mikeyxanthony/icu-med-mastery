@@ -846,19 +846,19 @@
             <div class="component-sub">${c.subtitle}</div>
           </div>
         </div>
-        <div class="component-section">
+        <div class="component-section" data-ai="what">
           <h4>What it does</h4>
           <p>${c.whatItDoes}</p>
         </div>
-        <div class="component-section">
+        <div class="component-section" data-ai="specs">
           <h4>Specs</h4>
           <ul>${c.typicalSpecs.map((s) => `<li>${s}</li>`).join("")}</ul>
         </div>
-        <div class="component-section">
+        <div class="component-section" data-ai="monitor">
           <h4>What to monitor</h4>
           <ul>${c.monitor.map((s) => `<li>${s}</li>`).join("")}</ul>
         </div>
-        <div class="component-section danger-block">
+        <div class="component-section danger-block" data-ai="problems">
           <h4>What can go wrong</h4>
           <ul>${c.problems.map((s) => `<li>${s}</li>`).join("")}</ul>
         </div>
@@ -870,6 +870,19 @@
         getText: () => componentToText(c),
         getSvg: () => document.getElementById("ecmo-circuit-svg"),
         baseFilename: `ecmo-${key}`,
+      });
+    }
+    if (window.AITutor) {
+      const aiTopic = `${c.name} (ECMO)`;
+      const aiSections = [
+        ["what", "What it does", c.whatItDoes],
+        ["specs", "Specs", c.typicalSpecs],
+        ["monitor", "What to monitor", c.monitor],
+        ["problems", "What can go wrong", c.problems],
+      ];
+      aiSections.forEach(([key, label, content]) => {
+        const el = target.querySelector(`[data-ai="${key}"]`);
+        if (el) window.AITutor.attachAIButtons(el, { topic: aiTopic, section: label, getContent: () => content });
       });
     }
   }
@@ -903,7 +916,7 @@
         </div>
       </div>
       <div class="modes-grid">
-        <div class="mode-card">
+        <div class="mode-card" data-mode="vv">
           <div class="mode-svg-wrap">${vvSVG()}</div>
           <div class="mode-info">
             <h3>${MODES.vv.name}</h3>
@@ -917,10 +930,11 @@
             <h4 class="danger">Mode-specific issues</h4>
             <ul>${MODES.vv.uniqueIssues.map((u) => `<li>${u}</li>`).join("")}</ul>
             <div class="mode-versus">${MODES.vv.vsAlternative}</div>
+            <div class="mode-ai-mount"></div>
           </div>
         </div>
 
-        <div class="mode-card">
+        <div class="mode-card" data-mode="va">
           <div class="mode-svg-wrap">${vaSVG()}</div>
           <div class="mode-info">
             <h3>${MODES.va.name}</h3>
@@ -934,10 +948,19 @@
             <h4 class="danger">Mode-specific issues</h4>
             <ul>${MODES.va.uniqueIssues.map((u) => `<li>${u}</li>`).join("")}</ul>
             <div class="mode-versus">${MODES.va.vsAlternative}</div>
+            <div class="mode-ai-mount"></div>
           </div>
         </div>
       </div>
     `;
+    if (window.AITutor) {
+      const summarize = (m) =>
+        `Purpose: ${m.purpose}\n\nCannulation:\n${m.cannulation.map((x) => `• ${x}`).join("\n")}\n\nIndications:\n${m.indications.map((x) => `• ${x}`).join("\n")}\n\nHemodynamics: ${m.hemodynamics}\n\nMode-specific issues:\n${m.uniqueIssues.map((x) => `• ${x}`).join("\n")}`;
+      const vvMount = document.querySelector('[data-mode="vv"] .mode-ai-mount');
+      const vaMount = document.querySelector('[data-mode="va"] .mode-ai-mount');
+      if (vvMount) window.AITutor.attachAIButtons(vvMount, { topic: "VV-ECMO", section: "VV-ECMO overview", getContent: () => summarize(MODES.vv) });
+      if (vaMount) window.AITutor.attachAIButtons(vaMount, { topic: "VA-ECMO", section: "VA-ECMO overview", getContent: () => summarize(MODES.va) });
+    }
   }
 
   function renderOxygenator() {
@@ -1026,14 +1049,22 @@
             <p class="comp-def">${c.definition}</p>
             <button class="comp-expand">see signs, causes & management ↓</button>
             <div class="comp-detail" style="display:none">
-              <h4>Pathophysiology</h4>
-              <p>${c.pathophys}</p>
-              <h4 class="warn">Signs at the bedside</h4>
-              <ul>${c.signs.map((s) => `<li>${s}</li>`).join("")}</ul>
-              <h4 class="danger">Causes</h4>
-              <ul>${c.causes.map((s) => `<li>${s}</li>`).join("")}</ul>
-              <h4 class="info">Management</h4>
-              <ul>${c.management.map((s) => `<li>${s}</li>`).join("")}</ul>
+              <div data-ai="pathophys">
+                <h4>Pathophysiology</h4>
+                <p>${c.pathophys}</p>
+              </div>
+              <div data-ai="signs">
+                <h4 class="warn">Signs at the bedside</h4>
+                <ul>${c.signs.map((s) => `<li>${s}</li>`).join("")}</ul>
+              </div>
+              <div data-ai="causes">
+                <h4 class="danger">Causes</h4>
+                <ul>${c.causes.map((s) => `<li>${s}</li>`).join("")}</ul>
+              </div>
+              <div data-ai="mgmt">
+                <h4 class="info">Management</h4>
+                <ul>${c.management.map((s) => `<li>${s}</li>`).join("")}</ul>
+              </div>
               <div class="comp-export-mount"></div>
             </div>
           </div>
@@ -1048,13 +1079,30 @@
         btn.textContent = expanded
           ? "see signs, causes & management ↓"
           : "hide details ↑";
-        if (!expanded && window.NotesExport) {
-          const mount = detail.querySelector(".comp-export-mount");
-          if (mount && !mount.dataset.bound) {
-            mount.dataset.bound = "1";
-            window.NotesExport.attachExportButtons(mount, {
-              getText: () => complicationToText(COMPLICATIONS[i]),
-              baseFilename: `ecmo-${COMPLICATIONS[i].id}`,
+        if (!expanded) {
+          const comp = COMPLICATIONS[i];
+          if (window.NotesExport) {
+            const mount = detail.querySelector(".comp-export-mount");
+            if (mount && !mount.dataset.bound) {
+              mount.dataset.bound = "1";
+              window.NotesExport.attachExportButtons(mount, {
+                getText: () => complicationToText(comp),
+                baseFilename: `ecmo-${comp.id}`,
+              });
+            }
+          }
+          if (window.AITutor && !detail.dataset.aiBound) {
+            detail.dataset.aiBound = "1";
+            const aiTopic = `${comp.name} (${comp.mode} ECMO complication)`;
+            const aiSections = [
+              ["pathophys", "Pathophysiology", comp.pathophys],
+              ["signs", "Signs at the bedside", comp.signs],
+              ["causes", "Causes", comp.causes],
+              ["mgmt", "Management", comp.management],
+            ];
+            aiSections.forEach(([key, label, content]) => {
+              const el = detail.querySelector(`[data-ai="${key}"]`);
+              if (el) window.AITutor.attachAIButtons(el, { topic: aiTopic, section: label, getContent: () => content });
             });
           }
         }
@@ -1114,6 +1162,17 @@
         window.NotesExport.attachExportButtons(mount, {
           getText: () => paramGroupToText(PARAMS[i]),
           baseFilename: `ecmo-params-${PARAMS[i].group.replace(/\s+/g, '-').toLowerCase()}`,
+        });
+      });
+    }
+    if (window.AITutor) {
+      view.querySelectorAll(".param-export-mount").forEach((mount, i) => {
+        const g = PARAMS[i];
+        const contentLines = g.items.map(([k, v]) => v ? `${k}: ${v}` : k).join("\n");
+        window.AITutor.attachAIButtons(mount, {
+          topic: `ECMO ${g.group}`,
+          section: g.group,
+          getContent: () => contentLines,
         });
       });
     }
