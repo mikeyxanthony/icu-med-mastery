@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#fff1f7" />
+    <title>Arterial Line ✿ ICU Med Mastery</title>
+    <meta name="description" content="Interactive arterial line waveform study — anatomy, damping, abnormal waveforms (pulsus paradoxus, alternans, bisferiens), setup, and quiz." />
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ec4899'/%3E%3Cpath d='M8 42 L16 42 L22 22 L28 50 L32 30 L38 42 L56 42' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <style>
+      .aline-canvas-wrap {
+        background: var(--paper);
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        padding: 14px;
+        box-shadow: var(--shadow-md);
+        margin-bottom: 18px;
+      }
+      .aline-canvas-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 10px;
+        padding: 0 4px;
+      }
+      .aline-strip-label {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--ink-soft);
+        font-weight: 600;
+      }
+      .aline-pill {
+        background: linear-gradient(135deg, var(--pink), var(--lavender));
+        color: white;
+        font-family: var(--font-fun);
+        font-size: 18px;
+        font-weight: 700;
+        padding: 4px 16px;
+        border-radius: 999px;
+        box-shadow: 0 3px 10px rgba(236, 72, 153, 0.3);
+      }
+      .aline-canvas-container {
+        overflow-x: auto;
+        border-radius: 10px;
+        background: #fef7fb;
+      }
+      canvas.aline-canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+        min-width: 680px;
+      }
+
+      .aline-anatomy-svg {
+        width: 100%;
+        height: auto;
+        max-width: 1000px;
+        margin: 0 auto;
+        display: block;
+        background: #fef7fb;
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        padding: 14px;
+        box-shadow: var(--shadow-sm);
+      }
+      .anatomy-hotspot {
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .anatomy-hotspot:hover circle { transform: scale(1.25); transform-origin: center; }
+      .anatomy-hotspot.selected circle {
+        fill: var(--pink-deep);
+        transform: scale(1.4);
+        transform-origin: center;
+      }
+      .anatomy-detail {
+        background: linear-gradient(160deg, var(--paper) 0%, var(--paper-tint) 100%);
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px 22px;
+        margin-top: 14px;
+        box-shadow: var(--shadow-sm);
+      }
+      .anatomy-detail h3 {
+        margin: 0 0 8px;
+        font-size: 22px;
+        background: linear-gradient(120deg, var(--pink-deep), var(--lavender-deep));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .anatomy-detail .desc { line-height: 1.6; }
+      .anatomy-detail .pearl {
+        background: linear-gradient(135deg, var(--pink-soft), var(--lavender-soft));
+        border-left: 4px solid var(--pink);
+        padding: 10px 14px;
+        border-radius: var(--radius-sm);
+        margin-top: 12px;
+        font-size: 14px;
+      }
+
+      .damping-controls {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px 22px;
+        margin-bottom: 16px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 18px;
+        align-items: center;
+      }
+      @media (max-width: 720px) {
+        .damping-controls { grid-template-columns: 1fr; }
+      }
+      .damping-slider-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--ink-soft);
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+      .damping-slider-label .value {
+        font-family: var(--font-fun);
+        font-size: 20px;
+        color: var(--pink-deep);
+      }
+      .damping-row { display: flex; align-items: center; gap: 16px; }
+      .damping-row input[type="range"] {
+        flex: 1;
+        -webkit-appearance: none;
+        appearance: none;
+        height: 10px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #fed7aa, #fbcfe8, #ddd6fe);
+        outline: none;
+      }
+      .damping-row input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--pink), var(--lavender));
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(236, 72, 153, 0.5);
+        border: 3px solid white;
+      }
+      .damping-row input[type="range"]::-moz-range-thumb {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--pink), var(--lavender));
+        cursor: pointer;
+        border: 3px solid white;
+      }
+      .flush-test-btn {
+        background: linear-gradient(135deg, var(--pink), var(--lavender));
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        font-size: 14px;
+        font-weight: 700;
+        border-radius: 999px;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba(236, 72, 153, 0.35);
+        font-family: inherit;
+      }
+      .flush-test-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(236, 72, 153, 0.45);
+      }
+
+      .abnormal-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      @media (max-width: 880px) {
+        .abnormal-grid { grid-template-columns: 1fr; }
+      }
+      .abnormal-card {
+        background: var(--paper);
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        padding: 14px 16px 18px;
+        box-shadow: var(--shadow-sm);
+        cursor: pointer;
+        transition: all 0.18s ease;
+      }
+      .abnormal-card:hover {
+        border-color: var(--pink);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+      }
+      .abnormal-card canvas {
+        width: 100%;
+        height: auto;
+        background: #fef7fb;
+        border-radius: 8px;
+        margin-bottom: 10px;
+      }
+      .abnormal-card h3 {
+        margin: 0 0 6px;
+        font-size: 18px;
+        background: linear-gradient(120deg, var(--pink-deep), var(--lavender-deep));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .abnormal-card .feature {
+        font-size: 13px;
+        color: var(--ink);
+        line-height: 1.5;
+        margin-bottom: 8px;
+      }
+      .abnormal-card .seen-in {
+        font-size: 12px;
+        color: var(--ink-soft);
+      }
+      .abnormal-card .seen-in strong { color: var(--pink-deep); }
+
+      .abnormal-detail {
+        background: linear-gradient(160deg, var(--paper) 0%, var(--paper-tint) 100%);
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        padding: 22px 24px;
+        margin-top: 16px;
+        box-shadow: var(--shadow-md);
+      }
+      .abnormal-detail .back-btn {
+        background: var(--paper);
+        border: 2px solid var(--border);
+        color: var(--ink-soft);
+        padding: 6px 14px;
+        font-size: 12px;
+        border-radius: 999px;
+        cursor: pointer;
+        margin-bottom: 14px;
+      }
+      .abnormal-detail h3 {
+        margin: 0 0 8px;
+        font-size: 28px;
+        background: linear-gradient(120deg, var(--pink-deep), var(--lavender-deep));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .abnormal-detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-top: 14px;
+      }
+      @media (max-width: 720px) {
+        .abnormal-detail-grid { grid-template-columns: 1fr; }
+      }
+      .abnormal-detail-card {
+        background: var(--paper);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 14px 16px;
+      }
+      .abnormal-detail-card h4 {
+        margin: 0 0 8px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+        color: var(--pink-deep);
+      }
+      .abnormal-detail-card.warn { background: linear-gradient(160deg, #fff7ed, var(--paper)); border-color: #fed7aa; }
+      .abnormal-detail-card.warn h4 { color: #c2410c; }
+      .abnormal-detail-card.info { background: linear-gradient(160deg, var(--lavender-soft), var(--paper)); border-color: #ddd6fe; }
+      .abnormal-detail-card.info h4 { color: var(--lavender-deep); }
+      .abnormal-detail-card ul { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.55; }
+      .abnormal-detail-card ul li::marker { color: var(--pink); }
+
+      .pressure-calc {
+        background: linear-gradient(160deg, var(--paper) 0%, var(--paper-tint) 100%);
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        padding: 22px 24px;
+        margin-bottom: 16px;
+        box-shadow: var(--shadow-sm);
+      }
+      .pressure-inputs {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+      @media (max-width: 560px) { .pressure-inputs { grid-template-columns: 1fr 1fr; } }
+      .pressure-input label {
+        display: block;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+      .pressure-input input {
+        width: 100%;
+        padding: 10px 14px;
+        border: 2px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+      .pressure-input input:focus {
+        outline: none;
+        border-color: var(--pink);
+        box-shadow: 0 0 0 4px var(--pink-glow);
+      }
+      .pressure-results {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .pressure-result-card {
+        background: linear-gradient(135deg, var(--pink-soft), var(--lavender-soft));
+        border: 2px solid var(--border-strong);
+        border-radius: var(--radius);
+        padding: 14px 18px;
+        text-align: center;
+      }
+      .pressure-result-card .label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--pink-deep);
+        font-weight: 700;
+      }
+      .pressure-result-card .value {
+        font-family: var(--font-fun);
+        font-size: 40px;
+        font-weight: 700;
+        background: linear-gradient(120deg, var(--pink-deep), var(--lavender-deep));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin: 4px 0;
+        line-height: 1;
+      }
+      .pressure-result-card .formula { font-size: 11px; color: var(--ink-soft); font-family: var(--font-mono); }
+
+      .info-block-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      @media (max-width: 880px) { .info-block-grid { grid-template-columns: 1fr; } }
+      .info-block-card {
+        background: linear-gradient(160deg, var(--paper) 0%, var(--paper-tint) 100%);
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px 20px;
+        box-shadow: var(--shadow-sm);
+      }
+      .info-block-card.danger { background: linear-gradient(160deg, var(--coral-soft), var(--paper)); border-color: #fecdd3; }
+      .info-block-card.danger h3 { color: var(--coral); }
+      .info-block-card.danger h3::before { content: "⚠"; }
+      .info-block-card h3 {
+        margin: 0 0 10px;
+        font-size: 14px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--pink-deep);
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .info-block-card h3::before { content: "✿"; color: var(--pink); }
+      .info-block-card ul { margin: 0; padding-left: 22px; }
+      .info-block-card ul li { margin-bottom: 6px; line-height: 1.55; font-size: 14px; }
+      .info-block-card ul li::marker { color: var(--pink); }
+      .info-block-card p { margin: 0 0 8px; font-size: 14px; line-height: 1.6; }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title"><span class="page-emoji">🩸</span>Arterial Line</h2>
+          <div class="page-subtitle">waveform anatomy · damping · variants · setup · quiz ✿</div>
+        </div>
+      </div>
+
+      <nav class="modes" role="tablist">
+        <button class="mode-tab active" data-view="view-anatomy"><span class="icon">🫀</span>Anatomy</button>
+        <button class="mode-tab" data-view="view-damping"><span class="icon">📊</span>Damping</button>
+        <button class="mode-tab" data-view="view-abnormal"><span class="icon">🌊</span>Variants</button>
+        <button class="mode-tab" data-view="view-setup"><span class="icon">📐</span>Setup &amp; Pressures</button>
+        <button class="mode-tab" data-view="view-pearls"><span class="icon">💊</span>Complications</button>
+        <button class="mode-tab" data-view="view-quiz"><span class="icon">🎀</span>Quiz</button>
+      </nav>
+
+      <main>
+        <section id="view-anatomy" class="view active"></section>
+        <section id="view-damping" class="view"></section>
+        <section id="view-abnormal" class="view"></section>
+        <section id="view-setup" class="view"></section>
+        <section id="view-pearls" class="view"></section>
+        <section id="view-quiz" class="view"></section>
+      </main>
+
+      <footer>
+        <div>references: Marino's ICU Book · ESICM technical guidance · current critical care literature ✿</div>
+        <div class="disclaimer">study tool only — clinical decisions belong to the team caring for the patient 💕</div>
+      </footer>
+    </div>
+
+    <script src="./nav.js"></script>
+    <script src="./clipboard.js"></script>
+    <script src="./aline.js"></script>
+  </body>
+</html>

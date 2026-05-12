@@ -17,6 +17,7 @@
         <a href="/drugs" class="site-nav-link" data-page="drugs"><span class="nav-icon">💊</span><span class="nav-label">Drugs</span></a>
         <a href="/pathology" class="site-nav-link" data-page="pathology"><span class="nav-icon">🫀</span><span class="nav-label">Pathology</span></a>
         <a href="/ekg" class="site-nav-link" data-page="ekg"><span class="nav-icon">🩺</span><span class="nav-label">EKG</span></a>
+        <a href="/aline" class="site-nav-link" data-page="aline"><span class="nav-icon">🩸</span><span class="nav-label">A-Line</span></a>
         <a href="/ecmo" class="site-nav-link" data-page="ecmo"><span class="nav-icon">🫁</span><span class="nav-label">ECMO</span></a>
       </div>
       <div class="nav-actions">
@@ -44,6 +45,7 @@
     if (path === "/drugs" || path === "/drugs.html") activePage = "drugs";
     else if (path === "/pathology" || path === "/pathology.html") activePage = "pathology";
     else if (path === "/ekg" || path === "/ekg.html") activePage = "ekg";
+    else if (path === "/aline" || path === "/aline.html") activePage = "aline";
     else if (path === "/ecmo" || path === "/ecmo.html") activePage = "ecmo";
 
     document.querySelectorAll(".site-nav-link").forEach((a) => {
