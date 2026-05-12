@@ -143,6 +143,95 @@
         min-width: 700px;
       }
 
+      .ekg-notes-wrap {
+        background: linear-gradient(160deg, var(--paper) 0%, var(--paper-tint) 100%);
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px 20px;
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 18px;
+        position: relative;
+        overflow: hidden;
+      }
+      .ekg-notes-wrap::before {
+        content: "";
+        position: absolute;
+        top: -20px;
+        right: -20px;
+        width: 80px;
+        height: 80px;
+        background: radial-gradient(circle, var(--pink-soft), transparent);
+        border-radius: 50%;
+        opacity: 0.5;
+      }
+      .ekg-notes-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .ekg-notes-header label {
+        font-family: var(--font-fun);
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--pink-deep);
+        cursor: text;
+      }
+      .notes-status {
+        font-size: 11px;
+        color: var(--ink-soft);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        font-weight: 700;
+        padding: 4px 10px;
+        background: var(--pink-soft);
+        border-radius: 999px;
+        transition: all 0.3s ease;
+      }
+      .notes-status.saved {
+        background: var(--mint-soft);
+        color: #047857;
+      }
+      #strip-notes {
+        width: 100%;
+        min-height: 110px;
+        background: var(--paper-soft);
+        border: 2px solid var(--border);
+        border-radius: var(--radius-sm);
+        color: var(--ink);
+        padding: 14px 16px;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        resize: vertical;
+        line-height: 1.55;
+        transition: all 0.15s ease;
+        box-shadow: inset 0 1px 2px rgba(236, 72, 153, 0.05);
+      }
+      #strip-notes::placeholder {
+        color: var(--ink-mute);
+        font-style: italic;
+      }
+      #strip-notes:focus {
+        outline: none;
+        border-color: var(--pink);
+        background: var(--paper);
+        box-shadow: 0 0 0 4px var(--pink-glow);
+      }
+      .ekg-notes-hint {
+        margin-top: 10px;
+        padding: 10px 14px;
+        background: linear-gradient(135deg, var(--pink-soft), var(--lavender-soft));
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        color: var(--ink-soft);
+        font-weight: 500;
+        line-height: 1.45;
+      }
+      .ekg-notes-hint strong { color: var(--pink-deep); }
+
       .ekg-info-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -337,7 +426,8 @@
             <label>&nbsp;</label>
             <div class="ekg-action-buttons">
               <button class="primary" id="regenerate">✨ new strip</button>
-              <button class="ghost" id="download">⬇ save png</button>
+              <button class="ghost" id="download">⬇ strip only</button>
+              <button class="ghost" id="save-page">💾 save full page</button>
             </div>
           </div>
         </div>
@@ -350,6 +440,15 @@
           <div class="ekg-canvas-container">
             <canvas id="ekg-canvas" width="1500" height="400"></canvas>
           </div>
+        </div>
+
+        <div class="ekg-notes-wrap">
+          <div class="ekg-notes-header">
+            <label for="strip-notes">✏️ your notes for this rhythm</label>
+            <span class="notes-status" id="notes-status">notes saved per rhythm · in this browser</span>
+          </div>
+          <textarea id="strip-notes" placeholder="type anything to remember about this rhythm... it'll be here next time you pull this one up 💕"></textarea>
+          <div class="ekg-notes-hint">💡 want this whole page in Notability? hit <strong>save full page</strong> above — exports the strip + anatomy + clinical info + these notes as one image</div>
         </div>
 
         <div class="ekg-info-grid" id="info-grid"></div>

@@ -1043,11 +1043,347 @@
     renderStrip(canvas, samples);
     updateRhythmPill();
     renderInfo();
+    loadNotesIntoUI();
+  }
+
+  // ──────────────────────────────────────────────────────────
+  // Per-rhythm notes (localStorage)
+  // ──────────────────────────────────────────────────────────
+  function notesKey(rhythmId) { return `ekg_notes_v1::${rhythmId}`; }
+
+  function loadNotes(rhythmId) {
+    try { return localStorage.getItem(notesKey(rhythmId)) || ""; }
+    catch (e) { return ""; }
+  }
+
+  function saveNotes(rhythmId, value) {
+    try { localStorage.setItem(notesKey(rhythmId), value); }
+    catch (e) { /* quota or disabled */ }
+  }
+
+  function loadNotesIntoUI() {
+    const ta = document.getElementById("strip-notes");
+    if (!ta) return;
+    ta.value = loadNotes(currentRhythm.id);
+    const status = document.getElementById("notes-status");
+    if (status) {
+      status.textContent = ta.value
+        ? "loaded from your notes ✿"
+        : "notes save per rhythm · in this browser";
+      status.classList.remove("saved");
+    }
+  }
+
+  let notesSaveTimer = null;
+  function attachNotesAutoSave() {
+    const ta = document.getElementById("strip-notes");
+    if (!ta || ta.dataset.bound === "1") return;
+    ta.dataset.bound = "1";
+    const status = document.getElementById("notes-status");
+    ta.addEventListener("input", () => {
+      clearTimeout(notesSaveTimer);
+      notesSaveTimer = setTimeout(() => {
+        saveNotes(currentRhythm.id, ta.value);
+        if (status) {
+          status.textContent = "saved ✓";
+          status.classList.add("saved");
+          setTimeout(() => {
+            if (status.textContent === "saved ✓") {
+              status.textContent = ta.value
+                ? "saved · auto-saves as you type"
+                : "notes save per rhythm · in this browser";
+              status.classList.remove("saved");
+            }
+          }, 1500);
+        }
+      }, 350);
+    });
+    // Save on blur immediately
+    ta.addEventListener("blur", () => {
+      clearTimeout(notesSaveTimer);
+      saveNotes(currentRhythm.id, ta.value);
+    });
+  }
+
+  // ──────────────────────────────────────────────────────────
+  // Save Full Page — composite PNG (strip + meta + info + notes)
+  // ──────────────────────────────────────────────────────────
+  function wrapLines(ctx, text, maxWidth) {
+    if (!text) return [""];
+    const out = [];
+    for (const paragraph of String(text).split("\n")) {
+      if (!paragraph.trim()) { out.push(""); continue; }
+      const words = paragraph.split(/\s+/);
+      let cur = "";
+      for (const w of words) {
+        const test = cur ? cur + " " + w : w;
+        if (ctx.measureText(test).width > maxWidth && cur) {
+          out.push(cur);
+          cur = w;
+        } else {
+          cur = test;
+        }
+      }
+      if (cur) out.push(cur);
+    }
+    return out;
+  }
+
+  async function savePageAsPNG() {
+    const r = currentRhythm;
+    const rate = currentRate;
+    const notes = (document.getElementById("strip-notes")?.value || "").trim();
+    const sourceCanvas = document.getElementById("ekg-canvas");
+    if (!sourceCanvas) return;
+
+    const W = 1500;
+    const M = 60;
+    const innerW = W - 2 * M;
+    const stripAspect = sourceCanvas.width / sourceCanvas.height;
+    const stripW = innerW;
+    const stripH = Math.round(stripW / stripAspect);
+
+    const rateLabel = !rate || rate === 0 ? "—" : `${rate} bpm`;
+
+    const sections = [
+      { type: "brand" },
+      { type: "title", text: r.name },
+      { type: "meta", lines: [
+          `Heart Rate: ${rateLabel}`,
+          `Lead II  ·  25 mm/sec  ·  10 mm/mV  ·  6-second strip`,
+        ] },
+      { type: "strip" },
+      { type: "kvSection", heading: "Strip Anatomy", items: [
+          ["Rate", r.info.rate],
+          ["Rhythm", r.info.rhythm],
+          ["P waves", r.info.p],
+          ["PR interval", r.info.pr],
+          ["QRS complex", r.info.qrs],
+        ] },
+      { type: "textSection", heading: "Clinical Picture", label: "Significance", body: r.info.significance },
+      { type: "textSection", heading: "What to Do", body: r.info.action },
+    ];
+    if (notes) {
+      sections.push({ type: "textSection", heading: "Your Notes", body: notes, accent: true });
+    }
+    sections.push({ type: "footer" });
+
+    // Measure heights
+    const measure = document.createElement("canvas").getContext("2d");
+
+    const H = {
+      brand: 80,
+      title: 64,
+      meta: 64,
+      strip: stripH + 28,
+      sectionHeading: 56,
+      kvRowMin: 32,
+      kvKeyW: 200,
+      kvLineH: 26,
+      textBodyLineH: 28,
+      sectionPadBottom: 24,
+      footer: 50,
+    };
+
+    function sectionHeight(s) {
+      if (s.type === "brand") return H.brand;
+      if (s.type === "title") return H.title;
+      if (s.type === "meta") return H.meta;
+      if (s.type === "strip") return H.strip;
+      if (s.type === "kvSection") {
+        let h = H.sectionHeading;
+        measure.font = '500 17px "Quicksand", Arial, sans-serif';
+        for (const [, v] of s.items) {
+          const lines = wrapLines(measure, v, innerW - H.kvKeyW - 20);
+          h += Math.max(H.kvRowMin, lines.length * H.kvLineH + 6);
+        }
+        return h + H.sectionPadBottom;
+      }
+      if (s.type === "textSection") {
+        let h = H.sectionHeading;
+        if (s.label) h += 32;
+        measure.font = '500 17px "Quicksand", Arial, sans-serif';
+        const lines = wrapLines(measure, s.body, innerW - 32);
+        h += lines.length * H.textBodyLineH + 16;
+        return h + H.sectionPadBottom;
+      }
+      if (s.type === "footer") return H.footer;
+      return 0;
+    }
+
+    const heights = sections.map(sectionHeight);
+    const totalH = M + heights.reduce((a, b) => a + b, 0) + M;
+
+    // Build canvas
+    const canvas = document.createElement("canvas");
+    canvas.width = W;
+    canvas.height = totalH;
+    const c = canvas.getContext("2d");
+
+    // Background gradient
+    const bg = c.createLinearGradient(0, 0, 0, totalH);
+    bg.addColorStop(0, "#fff8fc");
+    bg.addColorStop(1, "#f5e9fb");
+    c.fillStyle = bg;
+    c.fillRect(0, 0, W, totalH);
+
+    // Top accent bar (pink → lavender gradient)
+    const bar = c.createLinearGradient(0, 0, W, 0);
+    bar.addColorStop(0, "#ec4899");
+    bar.addColorStop(1, "#a78bfa");
+    c.fillStyle = bar;
+    c.fillRect(0, 0, W, 14);
+
+    let yC = M;
+    for (let i = 0; i < sections.length; i++) {
+      const s = sections[i];
+      const h = heights[i];
+
+      if (s.type === "brand") {
+        c.fillStyle = "#831843";
+        c.font = '700 26px "Quicksand", Arial, sans-serif';
+        c.fillText("ICU Med Mastery — EKG Study Strip", M, yC + 32);
+        c.fillStyle = "#9d174d";
+        c.font = '500 14px ui-monospace, Menlo, monospace';
+        c.fillText("med-study-guide.vercel.app/ekg", M, yC + 56);
+        c.strokeStyle = "#fbcfe8";
+        c.lineWidth = 2;
+        c.beginPath();
+        c.moveTo(M, yC + 70);
+        c.lineTo(W - M, yC + 70);
+        c.stroke();
+      }
+      else if (s.type === "title") {
+        const grad = c.createLinearGradient(M, yC, M + innerW, yC);
+        grad.addColorStop(0, "#9d174d");
+        grad.addColorStop(1, "#6d28d9");
+        c.fillStyle = grad;
+        c.font = '700 46px "Quicksand", Arial, sans-serif';
+        c.fillText(s.text, M, yC + 48);
+      }
+      else if (s.type === "meta") {
+        c.fillStyle = "#7e22ce";
+        c.font = '700 18px ui-monospace, Menlo, monospace';
+        c.fillText(s.lines[0], M, yC + 24);
+        c.fillStyle = "#831843";
+        c.font = '500 14px ui-monospace, Menlo, monospace';
+        c.fillText(s.lines[1], M, yC + 50);
+      }
+      else if (s.type === "strip") {
+        c.fillStyle = "#fef7fb";
+        c.fillRect(M - 6, yC - 6, stripW + 12, stripH + 12);
+        c.drawImage(sourceCanvas, M, yC, stripW, stripH);
+        c.strokeStyle = "#fbcfe8";
+        c.lineWidth = 2;
+        c.strokeRect(M - 6, yC - 6, stripW + 12, stripH + 12);
+      }
+      else if (s.type === "kvSection") {
+        // heading
+        c.fillStyle = "#ec4899";
+        c.font = '700 28px "Quicksand", Arial, sans-serif';
+        c.fillText("✿  " + s.heading, M, yC + 32);
+        c.fillStyle = "#fbcfe8";
+        c.fillRect(M, yC + 44, 100, 3);
+
+        let textY = yC + 84;
+        for (const [k, v] of s.items) {
+          // key
+          c.fillStyle = "#9d174d";
+          c.font = '700 16px "Quicksand", Arial, sans-serif';
+          c.fillText(k, M, textY);
+          // value (wrapped)
+          c.fillStyle = "#1a1a1a";
+          c.font = '500 17px "Quicksand", Arial, sans-serif';
+          const lines = wrapLines(c, v, innerW - H.kvKeyW - 20);
+          let lY = textY;
+          for (const line of lines) {
+            c.fillText(line, M + H.kvKeyW, lY);
+            lY += H.kvLineH;
+          }
+          textY = Math.max(textY + H.kvRowMin, lY + 6);
+        }
+      }
+      else if (s.type === "textSection") {
+        // background card for notes accent
+        if (s.accent) {
+          const grad = c.createLinearGradient(M - 12, yC, M - 12, yC + h);
+          grad.addColorStop(0, "#fce7f3");
+          grad.addColorStop(1, "#ede9fe");
+          c.fillStyle = grad;
+          c.fillRect(M - 12, yC - 4, innerW + 24, h - H.sectionPadBottom + 8);
+          c.strokeStyle = "#fbcfe8";
+          c.lineWidth = 2;
+          c.strokeRect(M - 12, yC - 4, innerW + 24, h - H.sectionPadBottom + 8);
+        }
+        // heading
+        c.fillStyle = "#ec4899";
+        c.font = '700 28px "Quicksand", Arial, sans-serif';
+        c.fillText("✿  " + s.heading, M, yC + 32);
+        c.fillStyle = "#fbcfe8";
+        c.fillRect(M, yC + 44, 100, 3);
+
+        let textY = yC + 84;
+        if (s.label) {
+          c.fillStyle = "#9d174d";
+          c.font = '700 16px "Quicksand", Arial, sans-serif';
+          c.fillText(s.label + ":", M, textY);
+          textY += 30;
+        }
+        c.fillStyle = "#1a1a1a";
+        c.font = '500 17px "Quicksand", Arial, sans-serif';
+        const lines = wrapLines(c, s.body, innerW - 32);
+        for (const line of lines) {
+          c.fillText(line, M, textY);
+          textY += H.textBodyLineH;
+        }
+      }
+      else if (s.type === "footer") {
+        c.fillStyle = "#9d174d";
+        c.font = '500 13px ui-monospace, Menlo, monospace';
+        const date = new Date().toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+        c.fillText(`generated ${date} · paper-standard 25 mm/sec, 10 mm/mV`, M, yC + 24);
+        c.fillStyle = "#ec4899";
+        c.font = '700 18px "Quicksand", Arial, sans-serif';
+        c.textAlign = "right";
+        c.fillText("✿  ICU Med Mastery", W - M, yC + 24);
+        c.textAlign = "left";
+      }
+      yC += h;
+    }
+
+    // Bottom accent bar
+    const bar2 = c.createLinearGradient(0, 0, W, 0);
+    bar2.addColorStop(0, "#a78bfa");
+    bar2.addColorStop(1, "#ec4899");
+    c.fillStyle = bar2;
+    c.fillRect(0, totalH - 8, W, 8);
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `ekg-${r.id}-${rate || "rhythm"}.png`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          URL.revokeObjectURL(url);
+          a.remove();
+        }, 600);
+        resolve();
+      }, "image/png", 0.95);
+    });
   }
 
   function handleRhythmChange(rhythmId) {
     const r = RHYTHMS.find((x) => x.id === rhythmId);
     if (!r) return;
+    // Flush any pending notes save for the OUTGOING rhythm before switching
+    const ta = document.getElementById("strip-notes");
+    if (ta && currentRhythm) {
+      clearTimeout(notesSaveTimer);
+      saveNotes(currentRhythm.id, ta.value);
+    }
     currentRhythm = r;
     currentRate = r.rateDefault;
     updateRateSlider();
@@ -1190,6 +1526,11 @@
     });
     document.getElementById("regenerate").addEventListener("click", generateAndRender);
     document.getElementById("download").addEventListener("click", handleDownload);
+    const savePageBtn = document.getElementById("save-page");
+    if (savePageBtn) savePageBtn.addEventListener("click", savePageAsPNG);
+
+    attachNotesAutoSave();
+    loadNotesIntoUI();
 
     document.getElementById("mode-explore").addEventListener("click", () => switchMode("explore"));
     document.getElementById("mode-quiz").addEventListener("click", () => switchMode("quiz"));
