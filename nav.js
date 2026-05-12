@@ -17,10 +17,16 @@
         <a href="/drugs" class="site-nav-link" data-page="drugs"><span class="nav-icon">💊</span><span class="nav-label">Drugs</span></a>
         <a href="/ekg" class="site-nav-link" data-page="ekg"><span class="nav-icon">🩺</span><span class="nav-label">EKG</span></a>
       </div>
-      <a class="love-btn nav-love-btn" href="sms:+13057207147?&body=i%20love%20you" title="opens your messages app — just press send 💌">
-        <span class="love-heart">💌</span>
-        <span class="love-text">love mikey</span>
-      </a>
+      <div class="nav-actions">
+        <a class="love-btn nav-love-btn" href="sms:+13057207147?&body=i%20love%20you" title="opens your messages app — just press send 💌">
+          <span class="love-heart">💌</span>
+          <span class="love-text">love mikey</span>
+        </a>
+        <a class="boost-btn nav-boost-btn" href="sms:+13057207147?&body=i%20need%20a%20lil%20boost%2C%20do%20that%20thing%20u%20do%20and%20make%20me%20feel%20better%20pls" title="mikey will do the thing 🌟">
+          <span class="boost-icon">🌟</span>
+          <span class="boost-text">click for motivation</span>
+        </a>
+      </div>
     </nav>
   `;
 
