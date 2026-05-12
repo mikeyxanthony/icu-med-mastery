@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#fff1f7" />
+    <title>ECMO Study ✿ ICU Med Mastery</title>
+    <meta name="description" content="Interactive ECMO study tool — circuit components, VV vs VA, oxygenator function, complications, troubleshooting. For critical care nurses." />
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ec4899'/%3E%3Cpath d='M16 32 L26 32 L28 26 L34 38 L36 32 L48 32' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <div class="app">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title"><span class="page-emoji">🫁</span>ECMO Study</h2>
+          <div class="page-subtitle">circuit · physiology · complications · what every CCN needs to know 💕</div>
+        </div>
+      </div>
+
+      <nav class="modes" role="tablist">
+        <button class="mode-tab active" data-view="view-circuit"><span class="icon">🩸</span>Circuit</button>
+        <button class="mode-tab" data-view="view-modes"><span class="icon">🔄</span>VV vs VA</button>
+        <button class="mode-tab" data-view="view-oxygenator"><span class="icon">💨</span>Oxygenator</button>
+        <button class="mode-tab" data-view="view-complications"><span class="icon">⚠️</span>Complications</button>
+        <button class="mode-tab" data-view="view-params"><span class="icon">📊</span>Parameters</button>
+      </nav>
+
+      <main>
+        <section id="view-circuit" class="view active"></section>
+        <section id="view-modes" class="view"></section>
+        <section id="view-oxygenator" class="view"></section>
+        <section id="view-complications" class="view"></section>
+        <section id="view-params" class="view"></section>
+      </main>
+
+      <footer>
+        <div>references: ELSO Red Book · ELSO General Guidelines · current critical care literature ✿</div>
+        <div class="disclaimer">study tool only — institutional protocols and physician orders take precedence 💕</div>
+      </footer>
+    </div>
+
+    <script src="./nav.js"></script>
+    <script src="./clipboard.js"></script>
+    <script src="./ecmo.js"></script>
+  </body>
+</html>

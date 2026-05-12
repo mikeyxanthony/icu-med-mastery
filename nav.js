@@ -15,7 +15,9 @@
       <div class="site-nav-links">
         <a href="/" class="site-nav-link" data-page="home"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></a>
         <a href="/drugs" class="site-nav-link" data-page="drugs"><span class="nav-icon">💊</span><span class="nav-label">Drugs</span></a>
+        <a href="/pathology" class="site-nav-link" data-page="pathology"><span class="nav-icon">🫀</span><span class="nav-label">Pathology</span></a>
         <a href="/ekg" class="site-nav-link" data-page="ekg"><span class="nav-icon">🩺</span><span class="nav-label">EKG</span></a>
+        <a href="/ecmo" class="site-nav-link" data-page="ecmo"><span class="nav-icon">🫁</span><span class="nav-label">ECMO</span></a>
       </div>
       <div class="nav-actions">
         <a class="love-btn nav-love-btn" href="sms:+13057207147?&body=i%20love%20you" title="opens your messages app — just press send 💌">
@@ -40,7 +42,9 @@
     const path = window.location.pathname.replace(/\/$/, "") || "/";
     let activePage = "home";
     if (path === "/drugs" || path === "/drugs.html") activePage = "drugs";
+    else if (path === "/pathology" || path === "/pathology.html") activePage = "pathology";
     else if (path === "/ekg" || path === "/ekg.html") activePage = "ekg";
+    else if (path === "/ecmo" || path === "/ecmo.html") activePage = "ecmo";
 
     document.querySelectorAll(".site-nav-link").forEach((a) => {
       if (a.dataset.page === activePage) a.classList.add("active");
