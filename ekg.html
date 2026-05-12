@@ -308,23 +308,12 @@
   </head>
   <body>
     <div class="app ekg-page">
-      <header class="topbar">
-        <div class="brand">
-          <div class="logo" style="font-size:20px">♥</div>
-          <div>
-            <h1>EKG Strip Generator <span class="sparkle">✨</span></h1>
-            <div class="subtitle">6-second strips · Lead II · paper standard</div>
-          </div>
+      <div class="page-header">
+        <div>
+          <h2 class="page-title"><span class="page-emoji">🩺</span>EKG Strip Generator</h2>
+          <div class="page-subtitle">6-second strips · Lead II · 25 mm/sec · 10 mm/mV ✿</div>
         </div>
-        <a class="love-btn" href="sms:+13057207147?&body=i%20love%20you" title="opens your messages app — just press send 💌">
-          <span class="love-heart">💌</span>
-          <span class="love-text">click to tell mikey you love him</span>
-        </a>
-        <a href="/" class="readiness-pill" style="text-decoration:none;color:inherit" title="Back to drug library">
-          <span class="label">←</span>
-          <span class="score" style="font-size:18px">drugs</span>
-        </a>
-      </header>
+      </div>
 
       <div class="mode-toggle">
         <button id="mode-explore" class="active">🩺 generator</button>
@@ -402,6 +391,7 @@
       </footer>
     </div>
 
+    <script src="./nav.js"></script>
     <script src="./ekg.js"></script>
   </body>
 </html>

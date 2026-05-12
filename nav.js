@@ -1,0 +1,49 @@
+// ============================================================
+// Global navigation — injects the site-nav into every page
+// and highlights the active link based on URL
+// ============================================================
+(() => {
+  const NAV_HTML = `
+    <nav class="site-nav">
+      <a href="/" class="site-nav-brand">
+        <div class="site-nav-logo">Rx</div>
+        <div class="site-nav-brand-text">
+          <div class="site-nav-name">ICU Med Mastery</div>
+          <div class="site-nav-sub">study cute ✨</div>
+        </div>
+      </a>
+      <div class="site-nav-links">
+        <a href="/" class="site-nav-link" data-page="home"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></a>
+        <a href="/drugs" class="site-nav-link" data-page="drugs"><span class="nav-icon">💊</span><span class="nav-label">Drugs</span></a>
+        <a href="/ekg" class="site-nav-link" data-page="ekg"><span class="nav-icon">🩺</span><span class="nav-label">EKG</span></a>
+      </div>
+      <a class="love-btn nav-love-btn" href="sms:+13057207147?&body=i%20love%20you" title="opens your messages app — just press send 💌">
+        <span class="love-heart">💌</span>
+        <span class="love-text">love mikey</span>
+      </a>
+    </nav>
+  `;
+
+  function inject() {
+    // Insert nav as first child of body
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = NAV_HTML.trim();
+    document.body.insertBefore(wrapper.firstChild, document.body.firstChild);
+
+    // Mark active page
+    const path = window.location.pathname.replace(/\/$/, "") || "/";
+    let activePage = "home";
+    if (path === "/drugs" || path === "/drugs.html") activePage = "drugs";
+    else if (path === "/ekg" || path === "/ekg.html") activePage = "ekg";
+
+    document.querySelectorAll(".site-nav-link").forEach((a) => {
+      if (a.dataset.page === activePage) a.classList.add("active");
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", inject);
+  } else {
+    inject();
+  }
+})();
