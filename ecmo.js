@@ -527,205 +527,281 @@
   // SVG Diagrams
   // ──────────────────────────────────────────────────────────
   function circuitSVG() {
+    // Layout: patient on far left. Drainage (blue) runs along the BOTTOM track at y=295.
+    // Return (red) runs along the TOP track at y=183. No crossings, clean text bands between lines.
     return `
-      <svg viewBox="0 0 900 460" class="ecmo-svg" id="ecmo-circuit-svg">
+      <svg viewBox="0 0 880 460" class="ecmo-svg" id="ecmo-circuit-svg" preserveAspectRatio="xMidYMid meet">
         <defs>
-          <marker id="arrowRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+          <marker id="arrowRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
             <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444"/>
           </marker>
-          <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+          <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
             <path d="M 0 0 L 10 5 L 0 10 z" fill="#3b82f6"/>
           </marker>
-          <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+          <marker id="arrowLav" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#a78bfa"/>
+          </marker>
+          <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
             <path d="M 0 0 L 10 5 L 0 10 z" fill="#22c55e"/>
           </marker>
         </defs>
 
         <!-- Title -->
-        <text x="450" y="30" text-anchor="middle" font-family="Quicksand" font-size="18" font-weight="700" fill="#831843">ECMO Circuit (schematic)</text>
+        <text x="440" y="26" text-anchor="middle" font-family="Quicksand" font-size="16" font-weight="700" fill="#831843">ECMO Circuit — schematic (flow follows arrows)</text>
 
-        <!-- Patient -->
-        <ellipse cx="100" cy="240" rx="48" ry="130" fill="#fce7f3" stroke="#ec4899" stroke-width="2.5"/>
-        <text x="100" y="120" text-anchor="middle" font-family="Quicksand" font-size="13" font-weight="700" fill="#831843">Patient</text>
-        <circle cx="100" cy="170" r="4" fill="#831843"/>
-        <text x="100" y="155" text-anchor="middle" font-family="Quicksand" font-size="10" fill="#831843">heart</text>
+        <!-- ────────── PATIENT ────────── -->
+        <ellipse cx="80" cy="240" rx="42" ry="125" fill="#fce7f3" stroke="#ec4899" stroke-width="2.5"/>
+        <text x="80" y="155" text-anchor="middle" font-family="Quicksand" font-size="13" font-weight="700" fill="#831843">Patient</text>
+        <circle cx="80" cy="240" r="4" fill="#831843"/>
+        <text x="80" y="228" text-anchor="middle" font-family="Quicksand" font-size="9" font-style="italic" fill="#831843">heart</text>
+        <!-- venous (drainage) site -->
+        <circle cx="120" cy="295" r="5" fill="#3b82f6" stroke="#1e40af" stroke-width="2"/>
+        <!-- return site -->
+        <circle cx="120" cy="183" r="5" fill="#ef4444" stroke="#991b1b" stroke-width="2"/>
 
-        <!-- Drainage cannula (blue, going right and down) -->
+        <!-- ────────── DRAINAGE LINE (blue, bottom track) ────────── -->
         <g class="ecmo-part" data-component="drainage">
-          <path d="M 148 200 L 240 200 L 240 280 L 310 280" stroke="#3b82f6" stroke-width="9" fill="none" stroke-linecap="round" marker-end="url(#arrowBlue)"/>
-          <rect x="148" y="180" width="92" height="40" fill="transparent" class="hit"/>
-          <text x="194" y="170" text-anchor="middle" font-family="Quicksand" font-size="12" font-weight="700" fill="#1e40af">drainage cannula</text>
+          <path d="M 125 295 L 262 295" stroke="#3b82f6" stroke-width="10" stroke-linecap="round" fill="none" marker-end="url(#arrowBlue)"/>
+          <text x="172" y="282" text-anchor="middle" font-family="Quicksand" font-size="12" font-weight="700" fill="#1e40af">drainage cannula</text>
         </g>
 
         <!-- Pre-pump pressure sensor -->
         <g class="ecmo-part" data-component="sensors">
-          <circle cx="240" cy="280" r="11" fill="#fff" stroke="#9333ea" stroke-width="2"/>
-          <text x="240" y="284" text-anchor="middle" font-size="11" font-weight="700" fill="#9333ea">P</text>
+          <circle cx="278" cy="295" r="11" fill="#fff" stroke="#9333ea" stroke-width="2"/>
+          <text x="278" y="299" text-anchor="middle" font-family="Quicksand" font-size="11" font-weight="700" fill="#9333ea">P</text>
         </g>
+        <line x1="289" y1="295" x2="304" y2="295" stroke="#3b82f6" stroke-width="10" stroke-linecap="round"/>
 
-        <!-- Pump -->
+        <!-- ────────── PUMP ────────── -->
         <g class="ecmo-part" data-component="pump">
-          <circle cx="360" cy="280" r="42" fill="#fff" stroke="#9333ea" stroke-width="3"/>
-          <path d="M 340 280 Q 360 260 380 280 Q 360 300 340 280 Z" fill="#c084fc"/>
-          <text x="360" y="340" text-anchor="middle" font-family="Quicksand" font-size="12" font-weight="700" fill="#7e22ce">pump</text>
+          <circle cx="340" cy="295" r="36" fill="#fff" stroke="#9333ea" stroke-width="3"/>
+          <ellipse cx="340" cy="295" rx="22" ry="7" fill="#c084fc" opacity="0.55"/>
+          <ellipse cx="340" cy="295" rx="7" ry="22" fill="#c084fc" opacity="0.55"/>
+          <circle cx="340" cy="295" r="4" fill="#7e22ce"/>
+          <text x="340" y="350" text-anchor="middle" font-family="Quicksand" font-size="13" font-weight="700" fill="#7e22ce">pump</text>
         </g>
 
-        <!-- Tubing pump to oxygenator (red, oxygenated will come back) -->
-        <path d="M 402 280 L 480 280" stroke="#a78bfa" stroke-width="9" fill="none" stroke-linecap="round"/>
+        <!-- Post-pump tubing (lavender — about to be oxygenated) -->
+        <path d="M 376 295 L 446 295" stroke="#a78bfa" stroke-width="10" stroke-linecap="round" fill="none" marker-end="url(#arrowLav)"/>
 
-        <!-- Pre-oxygenator pressure -->
+        <!-- Pre-oxygenator pressure sensor -->
         <g class="ecmo-part" data-component="sensors">
-          <circle cx="490" cy="280" r="11" fill="#fff" stroke="#9333ea" stroke-width="2"/>
-          <text x="490" y="284" text-anchor="middle" font-size="11" font-weight="700" fill="#9333ea">P</text>
+          <circle cx="460" cy="295" r="11" fill="#fff" stroke="#9333ea" stroke-width="2"/>
+          <text x="460" y="299" text-anchor="middle" font-family="Quicksand" font-size="11" font-weight="700" fill="#9333ea">P</text>
         </g>
+        <line x1="471" y1="295" x2="495" y2="295" stroke="#a78bfa" stroke-width="10" stroke-linecap="round"/>
 
-        <!-- Oxygenator (rectangle with fiber lines) -->
+        <!-- ────────── OXYGENATOR ────────── -->
         <g class="ecmo-part" data-component="oxygenator">
-          <rect x="510" y="220" width="170" height="120" fill="#fff" stroke="#9333ea" stroke-width="3" rx="8"/>
-          <g stroke="#cbd5e1" stroke-width="1.2">
-            <line x1="525" y1="230" x2="525" y2="330"/>
-            <line x1="540" y1="230" x2="540" y2="330"/>
-            <line x1="555" y1="230" x2="555" y2="330"/>
-            <line x1="570" y1="230" x2="570" y2="330"/>
-            <line x1="585" y1="230" x2="585" y2="330"/>
-            <line x1="600" y1="230" x2="600" y2="330"/>
-            <line x1="615" y1="230" x2="615" y2="330"/>
-            <line x1="630" y1="230" x2="630" y2="330"/>
-            <line x1="645" y1="230" x2="645" y2="330"/>
-            <line x1="660" y1="230" x2="660" y2="330"/>
-            <line x1="675" y1="230" x2="675" y2="330"/>
+          <rect x="495" y="235" width="210" height="120" fill="#fff" stroke="#9333ea" stroke-width="3" rx="8"/>
+          <g stroke="#cbd5e1" stroke-width="1.4">
+            <line x1="510" y1="252" x2="510" y2="334"/>
+            <line x1="525" y1="252" x2="525" y2="334"/>
+            <line x1="540" y1="252" x2="540" y2="334"/>
+            <line x1="555" y1="252" x2="555" y2="334"/>
+            <line x1="570" y1="252" x2="570" y2="334"/>
+            <line x1="585" y1="252" x2="585" y2="334"/>
+            <line x1="600" y1="252" x2="600" y2="334"/>
+            <line x1="615" y1="252" x2="615" y2="334"/>
+            <line x1="630" y1="252" x2="630" y2="334"/>
+            <line x1="645" y1="252" x2="645" y2="334"/>
+            <line x1="660" y1="252" x2="660" y2="334"/>
+            <line x1="675" y1="252" x2="675" y2="334"/>
+            <line x1="690" y1="252" x2="690" y2="334"/>
           </g>
-          <text x="595" y="365" text-anchor="middle" font-family="Quicksand" font-size="12" font-weight="700" fill="#7e22ce">oxygenator</text>
-          <text x="595" y="380" text-anchor="middle" font-family="Quicksand" font-size="10" fill="#9ca3af">PMP hollow-fiber + heat exch.</text>
+          <text x="600" y="378" text-anchor="middle" font-family="Quicksand" font-size="13" font-weight="700" fill="#7e22ce">oxygenator</text>
+          <text x="600" y="393" text-anchor="middle" font-family="Quicksand" font-size="10" fill="#9ca3af">PMP hollow-fiber membrane</text>
         </g>
 
-        <!-- Sweep gas in (green, top) -->
-        <g class="ecmo-part" data-component="sweep">
-          <path d="M 595 130 L 595 220" stroke="#22c55e" stroke-width="7" fill="none" stroke-linecap="round" marker-end="url(#arrowGreen)"/>
-          <text x="610" y="125" font-family="Quicksand" font-size="12" font-weight="700" fill="#15803d">sweep gas in</text>
-          <text x="610" y="140" font-family="Quicksand" font-size="10" fill="#15803d">FdO₂ + flow L/min</text>
-        </g>
-
-        <!-- Sweep gas out (top right of oxy) -->
-        <path d="M 670 220 L 670 175" stroke="#22c55e" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="4 3"/>
-        <text x="685" y="180" font-family="Quicksand" font-size="10" fill="#15803d">gas out</text>
-
-        <!-- Heat exchanger label -->
+        <!-- Heat exchanger band (integrated, top of oxygenator) -->
         <g class="ecmo-part" data-component="heat">
-          <rect x="510" y="335" width="170" height="14" fill="#fee2e2" stroke="#ef4444" stroke-width="1" rx="4"/>
-          <text x="595" y="346" text-anchor="middle" font-family="Quicksand" font-size="9" font-weight="700" fill="#dc2626">heat exchanger</text>
+          <rect x="497" y="237" width="206" height="13" fill="#fee2e2" stroke="#ef4444" stroke-width="1.2" rx="3"/>
+          <text x="600" y="247" text-anchor="middle" font-family="Quicksand" font-size="10" font-weight="700" fill="#dc2626">heat exchanger</text>
         </g>
 
-        <!-- Post-oxygenator pressure -->
+        <!-- Sweep gas IN (short stub on top-left of oxygenator) -->
+        <g class="ecmo-part" data-component="sweep">
+          <path d="M 540 200 L 540 225" stroke="#22c55e" stroke-width="6" stroke-linecap="round" fill="none" marker-end="url(#arrowGreen)"/>
+          <text x="540" y="172" text-anchor="middle" font-family="Quicksand" font-size="11" font-weight="700" fill="#15803d">sweep gas</text>
+          <text x="540" y="158" text-anchor="middle" font-family="Quicksand" font-size="9" fill="#15803d">FdO₂ + flow</text>
+        </g>
+
+        <!-- Sweep gas OUT (short dashed stub on top-right) -->
+        <path d="M 660 225 L 660 200" stroke="#86efac" stroke-width="5" stroke-linecap="round" stroke-dasharray="4 3" fill="none"/>
+        <text x="660" y="172" text-anchor="middle" font-family="Quicksand" font-size="10" font-weight="700" fill="#15803d">gas out</text>
+
+        <!-- Short post-oxy tubing to P sensor (red) -->
+        <line x1="705" y1="295" x2="711" y2="295" stroke="#ef4444" stroke-width="10" stroke-linecap="round"/>
+
+        <!-- Post-oxygenator pressure sensor -->
         <g class="ecmo-part" data-component="sensors">
-          <circle cx="695" cy="280" r="11" fill="#fff" stroke="#9333ea" stroke-width="2"/>
-          <text x="695" y="284" text-anchor="middle" font-size="11" font-weight="700" fill="#9333ea">P</text>
+          <circle cx="722" cy="295" r="11" fill="#fff" stroke="#9333ea" stroke-width="2"/>
+          <text x="722" y="299" text-anchor="middle" font-family="Quicksand" font-size="11" font-weight="700" fill="#9333ea">P</text>
         </g>
 
-        <!-- Return cannula (red, going up and back to patient) -->
+        <!-- ────────── RETURN LINE (red, top track back to patient) ────────── -->
         <g class="ecmo-part" data-component="return">
-          <path d="M 706 280 L 800 280 L 800 200 L 148 200 L 148 280"
-                stroke="#ef4444" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.0"/>
-          <path d="M 706 280 L 800 280 L 800 165 L 220 165 L 148 240"
-                stroke="#ef4444" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrowRed)"/>
-          <rect x="320" y="150" width="200" height="40" fill="transparent" class="hit"/>
-          <text x="420" y="145" text-anchor="middle" font-family="Quicksand" font-size="12" font-weight="700" fill="#991b1b">return cannula</text>
+          <path d="M 733 295 L 790 295 L 790 183 L 125 183"
+                stroke="#ef4444" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"
+                fill="none" marker-end="url(#arrowRed)"/>
+          <text x="320" y="172" text-anchor="middle" font-family="Quicksand" font-size="12" font-weight="700" fill="#991b1b">return cannula</text>
         </g>
 
-        <!-- Bridge (between drainage and return, normally clamped) -->
+        <!-- ────────── BRIDGE (clamped, between drainage and return) ────────── -->
         <g class="ecmo-part" data-component="bridge">
-          <line x1="190" y1="200" x2="190" y2="240" stroke="#9ca3af" stroke-width="3" stroke-dasharray="3 3"/>
-          <rect x="184" y="215" width="12" height="10" fill="#374151"/>
-          <text x="172" y="232" text-anchor="middle" font-family="Quicksand" font-size="9" fill="#6b7280" transform="rotate(-90 172 232)">bridge (clamped)</text>
+          <line x1="235" y1="195" x2="235" y2="287" stroke="#9ca3af" stroke-width="3" stroke-dasharray="4 3"/>
+          <rect x="227" y="234" width="16" height="11" fill="#374151"/>
+          <text x="250" y="237" font-family="Quicksand" font-size="9" font-weight="700" fill="#4b5563">bridge</text>
+          <text x="250" y="249" font-family="Quicksand" font-size="8" font-style="italic" fill="#6b7280">(clamped)</text>
         </g>
 
-        <!-- Flow direction labels -->
-        <text x="194" y="252" text-anchor="middle" font-family="Quicksand" font-size="9" fill="#1e40af" font-style="italic">venous out</text>
-        <text x="450" y="158" text-anchor="middle" font-family="Quicksand" font-size="9" fill="#991b1b" font-style="italic">oxygenated back</text>
-
-        <!-- Legend -->
-        <g transform="translate(20, 410)">
-          <rect x="0" y="0" width="18" height="6" fill="#3b82f6"/>
-          <text x="24" y="6" font-family="Quicksand" font-size="11" fill="#1e40af">deoxygenated</text>
-          <rect x="120" y="0" width="18" height="6" fill="#ef4444"/>
-          <text x="144" y="6" font-family="Quicksand" font-size="11" fill="#991b1b">oxygenated</text>
-          <rect x="240" y="0" width="18" height="6" fill="#22c55e"/>
-          <text x="264" y="6" font-family="Quicksand" font-size="11" fill="#15803d">sweep gas</text>
-          <circle cx="358" cy="3" r="8" fill="#fff" stroke="#9333ea" stroke-width="1.5"/>
-          <text x="358" y="6" text-anchor="middle" font-size="9" font-weight="700" fill="#9333ea">P</text>
-          <text x="372" y="6" font-family="Quicksand" font-size="11" fill="#7e22ce">pressure sensor</text>
+        <!-- ────────── LEGEND ────────── -->
+        <g transform="translate(50, 422)">
+          <rect x="0" y="0" width="20" height="6" fill="#3b82f6"/>
+          <text x="26" y="6" font-family="Quicksand" font-size="11" fill="#1e40af">deoxygenated</text>
+          <rect x="116" y="0" width="20" height="6" fill="#ef4444"/>
+          <text x="142" y="6" font-family="Quicksand" font-size="11" fill="#991b1b">oxygenated</text>
+          <rect x="232" y="0" width="20" height="6" fill="#22c55e"/>
+          <text x="258" y="6" font-family="Quicksand" font-size="11" fill="#15803d">sweep gas</text>
+          <circle cx="350" cy="3" r="7" fill="#fff" stroke="#9333ea" stroke-width="1.5"/>
+          <text x="350" y="6" text-anchor="middle" font-family="Quicksand" font-size="9" font-weight="700" fill="#9333ea">P</text>
+          <text x="361" y="6" font-family="Quicksand" font-size="11" fill="#7e22ce">pressure sensor</text>
+          <line x1="475" y1="3" x2="497" y2="3" stroke="#9ca3af" stroke-width="3" stroke-dasharray="4 3"/>
+          <text x="503" y="6" font-family="Quicksand" font-size="11" fill="#6b7280">bridge</text>
         </g>
       </svg>
     `;
   }
 
+  function torsoOutline() {
+    // Reusable torso outline (head + chest + abdomen + thighs) for VV/VA diagrams
+    return `
+      <!-- Head -->
+      <ellipse cx="190" cy="48" rx="22" ry="22" fill="#fde2ec" stroke="#ec4899" stroke-width="2"/>
+      <!-- Neck -->
+      <rect x="175" y="68" width="30" height="14" fill="#fde2ec" stroke="#ec4899" stroke-width="2"/>
+      <!-- Torso -->
+      <path d="M 105 84 Q 95 84 95 100 L 95 290 Q 95 310 105 318 L 145 350 L 145 405 Q 145 415 155 415 L 175 415 Q 185 415 185 405 L 185 360 L 195 360 L 195 405 Q 195 415 205 415 L 225 415 Q 235 415 235 405 L 235 350 L 275 318 Q 285 310 285 290 L 285 100 Q 285 84 275 84 Z"
+            fill="#fce7f3" stroke="#ec4899" stroke-width="2.5"/>
+    `;
+  }
+
   function vvSVG() {
     return `
-      <svg viewBox="0 0 400 460" class="ecmo-svg vva-svg">
-        <text x="200" y="26" text-anchor="middle" font-family="Quicksand" font-size="16" font-weight="700" fill="#831843">VV-ECMO</text>
-        <!-- Body silhouette -->
-        <ellipse cx="200" cy="240" rx="90" ry="180" fill="#fce7f3" stroke="#ec4899" stroke-width="2.5"/>
-        <!-- Heart -->
-        <path d="M 175 170 C 160 155 145 165 145 185 C 145 205 175 230 200 250 C 225 230 255 205 255 185 C 255 165 240 155 225 170 C 215 178 205 178 200 170 Z" fill="#fee2e2" stroke="#991b1b" stroke-width="1.5"/>
-        <text x="200" y="260" text-anchor="middle" font-size="10" fill="#831843" font-style="italic">RA/RV</text>
-        <!-- IVC drainage (femoral approach) -->
-        <path d="M 200 410 L 200 290" stroke="#3b82f6" stroke-width="8" fill="none" stroke-linecap="round"/>
-        <text x="115" y="395" font-family="Quicksand" font-size="11" font-weight="700" fill="#1e40af">drainage</text>
-        <text x="115" y="408" font-family="Quicksand" font-size="10" fill="#1e40af">femoral vein → IVC</text>
-        <!-- Return (jugular approach) -->
-        <path d="M 200 70 L 200 195" stroke="#ef4444" stroke-width="8" fill="none" stroke-linecap="round"/>
-        <text x="225" y="80" font-family="Quicksand" font-size="11" font-weight="700" fill="#991b1b">return</text>
-        <text x="225" y="93" font-family="Quicksand" font-size="10" fill="#991b1b">RIJ → SVC/RA</text>
-        <!-- ECMO module side -->
-        <g transform="translate(310, 200)">
-          <rect x="0" y="0" width="80" height="60" rx="8" fill="#fff" stroke="#9333ea" stroke-width="2"/>
-          <text x="40" y="34" text-anchor="middle" font-family="Quicksand" font-size="11" font-weight="700" fill="#7e22ce">ECMO</text>
-          <path d="M 0 25 L -110 25" stroke="#3b82f6" stroke-width="6" fill="none"/>
-          <path d="M -110 35 L 0 35" stroke="#ef4444" stroke-width="6" fill="none"/>
-        </g>
-        <!-- Flow direction notes -->
-        <text x="200" y="440" text-anchor="middle" font-family="Quicksand" font-size="11" fill="#831843">
-          venous → ECMO → venous (lungs bypassed)
-        </text>
+      <svg viewBox="0 0 420 470" class="ecmo-svg vva-svg" preserveAspectRatio="xMidYMid meet">
+        <text x="210" y="22" text-anchor="middle" font-family="Quicksand" font-size="15" font-weight="700" fill="#831843">VV-ECMO</text>
+        <text x="210" y="38" text-anchor="middle" font-family="Quicksand" font-size="10" fill="#9d174d">femoral drainage · RIJ return (most common modern config)</text>
+
+        ${torsoOutline()}
+
+        <!-- IVC (lower vessel) -->
+        <rect x="183" y="200" width="14" height="180" fill="#dbeafe" stroke="#93c5fd" stroke-width="1" opacity="0.75"/>
+        <text x="207" y="290" font-family="Quicksand" font-size="9" font-style="italic" fill="#1e40af">IVC</text>
+
+        <!-- SVC (upper vessel) -->
+        <rect x="183" y="84" width="14" height="100" fill="#dbeafe" stroke="#93c5fd" stroke-width="1" opacity="0.75"/>
+        <text x="207" y="130" font-family="Quicksand" font-size="9" font-style="italic" fill="#1e40af">SVC</text>
+
+        <!-- Heart silhouette -->
+        <ellipse cx="190" cy="195" rx="32" ry="22" fill="#fee2e2" stroke="#991b1b" stroke-width="1.5"/>
+        <text x="190" y="198" text-anchor="middle" font-family="Quicksand" font-size="9" font-weight="700" fill="#831843">RA</text>
+
+        <!-- DRAINAGE cannula: femoral vein → IVC, tip near RA -->
+        <path d="M 215 415 Q 215 400 200 388 L 195 350 L 192 305 L 190 218"
+              stroke="#3b82f6" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <circle cx="190" cy="218" r="4" fill="#3b82f6" stroke="#1e40af" stroke-width="1.5"/>
+
+        <!-- DRAINAGE tubing outside body to ECMO -->
+        <path d="M 215 415 Q 280 415 305 380 L 320 325"
+              stroke="#3b82f6" stroke-width="6" fill="none" stroke-linecap="round"/>
+
+        <!-- RETURN cannula: RIJ → SVC, tip in RA -->
+        <path d="M 205 68 L 200 100 L 195 145 L 192 178"
+              stroke="#ef4444" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <circle cx="192" cy="178" r="4" fill="#ef4444" stroke="#991b1b" stroke-width="1.5"/>
+
+        <!-- RETURN tubing outside body to ECMO -->
+        <path d="M 205 68 Q 280 68 305 130 L 320 235"
+              stroke="#ef4444" stroke-width="6" fill="none" stroke-linecap="round"/>
+
+        <!-- ECMO module -->
+        <rect x="310" y="235" width="100" height="92" rx="10" fill="#fff" stroke="#9333ea" stroke-width="2.5"/>
+        <text x="360" y="268" text-anchor="middle" font-family="Quicksand" font-size="12" font-weight="700" fill="#7e22ce">ECMO</text>
+        <text x="360" y="285" text-anchor="middle" font-family="Quicksand" font-size="9" fill="#7e22ce">pump +</text>
+        <text x="360" y="297" text-anchor="middle" font-family="Quicksand" font-size="9" fill="#7e22ce">oxygenator</text>
+
+        <!-- Cannula labels -->
+        <text x="225" y="438" font-family="Quicksand" font-size="11" font-weight="700" fill="#1e40af">drainage</text>
+        <text x="225" y="451" font-family="Quicksand" font-size="9" fill="#1e40af">femoral vein</text>
+        <text x="220" y="62" font-family="Quicksand" font-size="11" font-weight="700" fill="#991b1b">return</text>
+        <text x="220" y="74" font-family="Quicksand" font-size="9" fill="#991b1b">RIJ → SVC/RA</text>
+
+        <!-- Lungs bypassed indicator -->
+        <text x="60" y="462" font-family="Caveat" font-size="14" fill="#9d174d">venous → ECMO → venous · lungs bypassed ✿</text>
       </svg>
     `;
   }
 
   function vaSVG() {
     return `
-      <svg viewBox="0 0 400 460" class="ecmo-svg vva-svg">
-        <text x="200" y="26" text-anchor="middle" font-family="Quicksand" font-size="16" font-weight="700" fill="#831843">VA-ECMO (peripheral)</text>
-        <!-- Body silhouette -->
-        <ellipse cx="200" cy="240" rx="90" ry="180" fill="#fce7f3" stroke="#ec4899" stroke-width="2.5"/>
+      <svg viewBox="0 0 420 470" class="ecmo-svg vva-svg" preserveAspectRatio="xMidYMid meet">
+        <text x="210" y="22" text-anchor="middle" font-family="Quicksand" font-size="15" font-weight="700" fill="#831843">VA-ECMO (peripheral)</text>
+        <text x="210" y="38" text-anchor="middle" font-family="Quicksand" font-size="10" fill="#9d174d">femoral vein drainage · femoral artery return (retrograde aorta)</text>
+
+        ${torsoOutline()}
+
+        <!-- IVC (right side of midline) -->
+        <rect x="187" y="200" width="14" height="180" fill="#dbeafe" stroke="#93c5fd" stroke-width="1" opacity="0.75"/>
+        <text x="210" y="290" font-family="Quicksand" font-size="9" font-style="italic" fill="#1e40af">IVC</text>
+
+        <!-- Descending aorta (left side of midline) -->
+        <rect x="166" y="200" width="11" height="180" fill="#fecaca" stroke="#fca5a5" stroke-width="1" opacity="0.8"/>
+        <text x="140" y="290" text-anchor="end" font-family="Quicksand" font-size="9" font-style="italic" fill="#dc2626">aorta</text>
+
         <!-- Heart -->
-        <path d="M 175 170 C 160 155 145 165 145 185 C 145 205 175 230 200 250 C 225 230 255 205 255 185 C 255 165 240 155 225 170 C 215 178 205 178 200 170 Z" fill="#fee2e2" stroke="#991b1b" stroke-width="1.5"/>
-        <text x="200" y="260" text-anchor="middle" font-size="10" fill="#831843" font-style="italic">heart</text>
-        <!-- Aorta (descending) -->
-        <path d="M 215 195 Q 240 210 240 280 L 240 380" stroke="#fca5a5" stroke-width="6" fill="none" opacity="0.5"/>
-        <text x="245" y="280" font-size="9" fill="#dc2626">aorta</text>
-        <!-- Femoral vein drainage -->
-        <path d="M 175 410 L 175 285" stroke="#3b82f6" stroke-width="8" fill="none" stroke-linecap="round"/>
-        <text x="80" y="395" font-family="Quicksand" font-size="11" font-weight="700" fill="#1e40af">drainage</text>
-        <text x="80" y="408" font-family="Quicksand" font-size="10" fill="#1e40af">femoral vein</text>
-        <!-- Femoral artery return (retrograde aorta) -->
-        <path d="M 225 410 L 225 380 L 235 350" stroke="#ef4444" stroke-width="8" fill="none" stroke-linecap="round" marker-end="url(#redarrow)"/>
+        <ellipse cx="190" cy="195" rx="32" ry="22" fill="#fee2e2" stroke="#991b1b" stroke-width="1.5"/>
+        <text x="190" y="198" text-anchor="middle" font-family="Quicksand" font-size="9" font-weight="700" fill="#831843">heart</text>
+
+        <!-- DRAINAGE cannula: femoral vein → IVC, tip near RA -->
+        <path d="M 215 415 Q 215 400 205 388 L 198 350 L 195 305 L 194 218"
+              stroke="#3b82f6" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <circle cx="194" cy="218" r="4" fill="#3b82f6" stroke="#1e40af" stroke-width="1.5"/>
+
+        <!-- DRAINAGE tubing to ECMO -->
+        <path d="M 215 415 Q 280 415 305 380 L 320 325"
+              stroke="#3b82f6" stroke-width="6" fill="none" stroke-linecap="round"/>
+
+        <!-- RETURN cannula: femoral artery → retrograde up aorta, tip at iliac/aorta -->
+        <path d="M 175 415 Q 175 400 170 380 L 170 290"
+              stroke="#ef4444" stroke-width="6" fill="none" stroke-linecap="round" marker-end="url(#vaArrow)"/>
         <defs>
-          <marker id="redarrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <marker id="vaArrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
             <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444"/>
           </marker>
         </defs>
-        <text x="240" y="425" font-family="Quicksand" font-size="11" font-weight="700" fill="#991b1b">return</text>
-        <text x="240" y="438" font-family="Quicksand" font-size="10" fill="#991b1b">femoral artery (retrograde)</text>
-        <!-- ECMO module side -->
-        <g transform="translate(310, 200)">
-          <rect x="0" y="0" width="80" height="60" rx="8" fill="#fff" stroke="#9333ea" stroke-width="2"/>
-          <text x="40" y="34" text-anchor="middle" font-family="Quicksand" font-size="11" font-weight="700" fill="#7e22ce">ECMO</text>
-          <path d="M 0 25 L -135 25" stroke="#3b82f6" stroke-width="6" fill="none"/>
-          <path d="M -135 35 L 0 35" stroke="#ef4444" stroke-width="6" fill="none"/>
-        </g>
-        <!-- Watershed indicator -->
-        <line x1="180" y1="280" x2="260" y2="280" stroke="#fbbf24" stroke-width="2" stroke-dasharray="3 3"/>
-        <text x="270" y="284" font-size="9" fill="#b45309">watershed</text>
+
+        <!-- RETURN tubing to ECMO -->
+        <path d="M 175 415 Q 60 415 60 320 Q 60 245 310 245"
+              stroke="#ef4444" stroke-width="6" fill="none" stroke-linecap="round"/>
+
+        <!-- ECMO module -->
+        <rect x="310" y="245" width="100" height="92" rx="10" fill="#fff" stroke="#9333ea" stroke-width="2.5"/>
+        <text x="360" y="278" text-anchor="middle" font-family="Quicksand" font-size="12" font-weight="700" fill="#7e22ce">ECMO</text>
+        <text x="360" y="295" text-anchor="middle" font-family="Quicksand" font-size="9" fill="#7e22ce">pump +</text>
+        <text x="360" y="307" text-anchor="middle" font-family="Quicksand" font-size="9" fill="#7e22ce">oxygenator</text>
+
+        <!-- Watershed indicator (where retrograde ECMO meets antegrade native flow) -->
+        <line x1="155" y1="260" x2="225" y2="260" stroke="#fbbf24" stroke-width="2" stroke-dasharray="3 3"/>
+        <text x="230" y="264" font-family="Quicksand" font-size="9" fill="#b45309">watershed</text>
+        <text x="230" y="276" font-family="Quicksand" font-size="8" fill="#b45309" font-style="italic">Harlequin risk</text>
+
+        <!-- Cannula labels -->
+        <text x="225" y="438" font-family="Quicksand" font-size="11" font-weight="700" fill="#1e40af">drainage</text>
+        <text x="225" y="451" font-family="Quicksand" font-size="9" fill="#1e40af">femoral vein</text>
+        <text x="125" y="438" text-anchor="end" font-family="Quicksand" font-size="11" font-weight="700" fill="#991b1b">return</text>
+        <text x="125" y="451" text-anchor="end" font-family="Quicksand" font-size="9" fill="#991b1b">femoral artery</text>
+
+        <text x="60" y="462" font-family="Caveat" font-size="14" fill="#9d174d">venous → ECMO → arterial (retrograde) · heart + lungs bypassed ✿</text>
       </svg>
     `;
   }
