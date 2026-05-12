@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#fff1f7" />
+    <title>EKG Strip Generator ✿ ICU Med Mastery</title>
+    <meta name="description" content="Accurate, paper-standard 6-second EKG strip generator. 20+ rhythms with clinical info — Lead II, 25mm/sec, 10mm/mV." />
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ec4899'/%3E%3Cpath d='M8 32 L18 32 L22 18 L28 46 L34 22 L40 32 L56 32' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <style>
+      .ekg-page { max-width: 1200px; }
+
+      .ekg-controls {
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(20px);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px 20px;
+        margin-bottom: 18px;
+        display: grid;
+        grid-template-columns: 1.4fr 1fr auto;
+        gap: 16px;
+        align-items: end;
+      }
+      @media (max-width: 720px) {
+        .ekg-controls { grid-template-columns: 1fr; }
+      }
+      .ekg-control label {
+        display: block;
+        font-size: 11px;
+        color: var(--ink-soft);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+      .ekg-rhythm-select {
+        width: 100%;
+        padding: 11px 16px !important;
+        font-size: 15px !important;
+      }
+      .ekg-rate-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .ekg-rate-row input[type="range"] {
+        flex: 1;
+        -webkit-appearance: none;
+        appearance: none;
+        height: 8px;
+        background: var(--pink-soft);
+        border-radius: 999px;
+        outline: none;
+      }
+      .ekg-rate-row input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--pink), var(--lavender));
+        cursor: pointer;
+        box-shadow: 0 3px 8px rgba(236, 72, 153, 0.4);
+        border: 2px solid white;
+      }
+      .ekg-rate-row input[type="range"]::-moz-range-thumb {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--pink), var(--lavender));
+        cursor: pointer;
+        box-shadow: 0 3px 8px rgba(236, 72, 153, 0.4);
+        border: 2px solid white;
+      }
+      .ekg-rate-row input[type="range"]:disabled { opacity: 0.4; cursor: not-allowed; }
+      .ekg-rate-value {
+        font-family: var(--font-fun);
+        font-size: 26px;
+        font-weight: 700;
+        color: var(--pink-deep);
+        min-width: 70px;
+        text-align: right;
+        line-height: 1;
+      }
+      .ekg-rate-value .unit {
+        font-size: 13px;
+        color: var(--ink-soft);
+        font-family: 'Quicksand', sans-serif;
+        font-weight: 500;
+      }
+      .ekg-action-buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .ekg-strip-wrap {
+        background: var(--paper);
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        padding: 14px;
+        box-shadow: var(--shadow-md);
+        margin-bottom: 18px;
+        overflow: hidden;
+      }
+      .ekg-strip-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 10px;
+        padding: 0 4px;
+      }
+      .ekg-strip-label {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--ink-soft);
+        font-weight: 600;
+      }
+      .ekg-rhythm-pill {
+        background: linear-gradient(135deg, var(--pink), var(--lavender));
+        color: white;
+        font-family: var(--font-fun);
+        font-size: 18px;
+        font-weight: 700;
+        padding: 4px 16px;
+        border-radius: 999px;
+        box-shadow: 0 3px 10px rgba(236, 72, 153, 0.3);
+      }
+      .ekg-rhythm-pill.hidden { display: none; }
+      .ekg-canvas-container {
+        overflow-x: auto;
+        border-radius: 10px;
+        background: #fef7fb;
+      }
+      canvas#ekg-canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+        min-width: 700px;
+      }
+
+      .ekg-info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      @media (max-width: 720px) {
+        .ekg-info-grid { grid-template-columns: 1fr; }
+      }
+      .ekg-info-card {
+        background: linear-gradient(160deg, var(--paper) 0%, var(--paper-tint) 100%);
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px 20px;
+        box-shadow: var(--shadow-sm);
+      }
+      .ekg-info-card h3 {
+        margin: 0 0 10px;
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--pink-deep);
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .ekg-info-card h3::before { content: "✿"; color: var(--pink); }
+      .ekg-info-card.action h3::before { content: "💕"; }
+      .ekg-info-card.action h3 { color: var(--lavender-deep); }
+      .ekg-info-table {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 8px 14px;
+      }
+      .ekg-info-table dt {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--ink-soft);
+        font-weight: 700;
+      }
+      .ekg-info-table dd {
+        margin: 0;
+        font-size: 14px;
+        color: var(--ink);
+      }
+
+      /* Quiz mode */
+      .quiz-banner {
+        background: linear-gradient(135deg, var(--lavender-soft), var(--pink-soft));
+        border: 2px solid var(--lavender);
+        border-radius: var(--radius);
+        padding: 16px 20px;
+        margin-bottom: 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .quiz-banner h3 {
+        margin: 0;
+        font-family: var(--font-fun);
+        font-size: 22px;
+        color: var(--lavender-deep);
+        font-weight: 700;
+      }
+      .quiz-options {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      @media (max-width: 560px) {
+        .quiz-options { grid-template-columns: 1fr; }
+      }
+      .quiz-option {
+        background: var(--paper);
+        border: 2px solid var(--border);
+        padding: 14px 16px;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ink);
+        cursor: pointer;
+        text-align: left;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.15s ease;
+      }
+      .quiz-option:hover:not(:disabled) {
+        background: var(--paper-hover);
+        border-color: var(--pink);
+        transform: translateX(4px);
+      }
+      .quiz-option.correct {
+        background: linear-gradient(135deg, var(--mint-soft), #fff);
+        border-color: var(--mint);
+        color: #047857;
+      }
+      .quiz-option.wrong {
+        background: linear-gradient(135deg, var(--coral-soft), #fff);
+        border-color: var(--coral);
+        color: #be123c;
+      }
+      .quiz-result {
+        font-family: var(--font-fun);
+        font-size: 20px;
+        color: var(--pink-deep);
+        font-weight: 700;
+        margin-top: 10px;
+      }
+      .quiz-stats {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+      }
+      .quiz-stats .stat {
+        font-family: var(--font-fun);
+        font-size: 22px;
+        font-weight: 700;
+      }
+      .quiz-stats .stat .label {
+        font-family: 'Quicksand', sans-serif;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--ink-soft);
+        font-weight: 700;
+      }
+
+      .mode-toggle {
+        display: flex;
+        gap: 6px;
+        background: rgba(255,255,255,0.55);
+        backdrop-filter: blur(20px);
+        border: 1.5px solid var(--border);
+        border-radius: 999px;
+        padding: 4px;
+        margin-bottom: 18px;
+        max-width: 320px;
+      }
+      .mode-toggle button {
+        flex: 1;
+        background: transparent;
+        border: 2px solid transparent;
+        color: var(--ink-soft);
+        padding: 8px 14px;
+        font-size: 13px;
+        box-shadow: none;
+      }
+      .mode-toggle button:hover {
+        background: var(--paper-hover);
+        color: var(--pink-deep);
+        transform: none;
+      }
+      .mode-toggle button.active {
+        background: linear-gradient(135deg, var(--pink), var(--lavender));
+        color: white;
+        box-shadow: 0 3px 10px rgba(236, 72, 153, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app ekg-page">
+      <header class="topbar">
+        <div class="brand">
+          <div class="logo" style="font-size:20px">♥</div>
+          <div>
+            <h1>EKG Strip Generator <span class="sparkle">✨</span></h1>
+            <div class="subtitle">6-second strips · Lead II · paper standard</div>
+          </div>
+        </div>
+        <a class="love-btn" href="sms:+13057207147?&body=i%20love%20you" title="opens your messages app — just press send 💌">
+          <span class="love-heart">💌</span>
+          <span class="love-text">click to tell mikey you love him</span>
+        </a>
+        <a href="/" class="readiness-pill" style="text-decoration:none;color:inherit" title="Back to drug library">
+          <span class="label">←</span>
+          <span class="score" style="font-size:18px">drugs</span>
+        </a>
+      </header>
+
+      <div class="mode-toggle">
+        <button id="mode-explore" class="active">🩺 generator</button>
+        <button id="mode-quiz">🎀 quiz me</button>
+      </div>
+
+      <div id="explore-view">
+        <div class="ekg-controls">
+          <div class="ekg-control">
+            <label for="rhythm-select">rhythm</label>
+            <select id="rhythm-select" class="ekg-rhythm-select"></select>
+          </div>
+          <div class="ekg-control">
+            <label>heart rate</label>
+            <div class="ekg-rate-row">
+              <input id="rate-slider" type="range" min="20" max="220" value="75" />
+              <div class="ekg-rate-value"><span id="rate-value">75</span><span class="unit"> bpm</span></div>
+            </div>
+          </div>
+          <div class="ekg-control">
+            <label>&nbsp;</label>
+            <div class="ekg-action-buttons">
+              <button class="primary" id="regenerate">✨ new strip</button>
+              <button class="ghost" id="download">⬇ save png</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="ekg-strip-wrap">
+          <div class="ekg-strip-meta">
+            <div class="ekg-strip-label">Lead II · 25 mm/sec · 10 mm/mV · 6 sec</div>
+            <div class="ekg-rhythm-pill" id="rhythm-pill"></div>
+          </div>
+          <div class="ekg-canvas-container">
+            <canvas id="ekg-canvas" width="1500" height="400"></canvas>
+          </div>
+        </div>
+
+        <div class="ekg-info-grid" id="info-grid"></div>
+      </div>
+
+      <div id="quiz-view" style="display:none">
+        <div class="quiz-banner">
+          <div>
+            <h3>identify the rhythm 🩺</h3>
+            <div style="color:var(--ink-soft);font-size:13px">study the strip, then pick the rhythm below</div>
+          </div>
+          <div class="quiz-stats">
+            <div class="stat"><span id="quiz-correct">0</span><div class="label">correct</div></div>
+            <div class="stat"><span id="quiz-total">0</span><div class="label">total</div></div>
+            <div class="stat"><span id="quiz-streak">0</span> 🔥<div class="label">streak</div></div>
+          </div>
+        </div>
+
+        <div class="ekg-strip-wrap">
+          <div class="ekg-strip-meta">
+            <div class="ekg-strip-label">Lead II · 25 mm/sec · 10 mm/mV · 6 sec</div>
+            <div class="ekg-rhythm-pill hidden" id="quiz-rhythm-pill"></div>
+          </div>
+          <div class="ekg-canvas-container">
+            <canvas id="quiz-canvas" width="1500" height="400"></canvas>
+          </div>
+        </div>
+
+        <div class="quiz-options" id="quiz-options"></div>
+        <div style="text-align:center">
+          <button class="primary" id="quiz-next">next strip ✿</button>
+        </div>
+        <div class="quiz-result" id="quiz-result" style="text-align:center"></div>
+      </div>
+
+      <footer style="margin-top:30px">
+        <div>strip math is mathematically generated for study — not a medical device 💕</div>
+        <div class="disclaimer">always correlate with the patient. waveforms are educational approximations.</div>
+      </footer>
+    </div>
+
+    <script src="./ekg.js"></script>
+  </body>
+</html>
